@@ -16,7 +16,11 @@ export default {
     try {
       if (path === '/' || path === '/index.html') {
         return new Response(getHTML(), {
-          headers: { 'Content-Type': 'text/html;charset=UTF-8', ...corsHeaders }
+          headers: {
+            'Content-Type': 'text/html;charset=UTF-8',
+            'Permissions-Policy': 'clipboard-read=(self), clipboard-write=(self)',
+            ...corsHeaders
+          }
         });
       }
 
@@ -64,9 +68,7 @@ export default {
 
 function verifyPassword(request, env) {
   const authHeader = request.headers.get('Authorization');
-  if (!authHeader || !authHeader.startsWith('Bearer ')) {
-    return false;
-  }
+  if (!authHeader || !authHeader.startsWith('Bearer ')) return false;
   const token = authHeader.substring(7);
   return token === env.PASSWORD;
 }
@@ -74,8 +76,7 @@ function verifyPassword(request, env) {
 async function handleUpload(request, env, corsHeaders) {
   if (!verifyPassword(request, env)) {
     return new Response(JSON.stringify({ error: 'Incorrect password' }), {
-      status: 401,
-      headers: { 'Content-Type': 'application/json', ...corsHeaders }
+      status: 401, headers: { 'Content-Type': 'application/json', ...corsHeaders }
     });
   }
 
@@ -86,16 +87,14 @@ async function handleUpload(request, env, corsHeaders) {
 
   if (!file) {
     return new Response(JSON.stringify({ error: 'No file provided' }), {
-      status: 400,
-      headers: { 'Content-Type': 'application/json', ...corsHeaders }
+      status: 400, headers: { 'Content-Type': 'application/json', ...corsHeaders }
     });
   }
 
-  const validTypes = ['image/jpeg', 'image/png', 'image/gif', 'image/webp', 'image/svg+xml', 'image/bmp'];
+  const validTypes = ['image/jpeg','image/png','image/gif','image/webp','image/svg+xml','image/bmp'];
   if (!validTypes.includes(file.type)) {
     return new Response(JSON.stringify({ error: 'Unsupported file type' }), {
-      status: 400,
-      headers: { 'Content-Type': 'application/json', ...corsHeaders }
+      status: 400, headers: { 'Content-Type': 'application/json', ...corsHeaders }
     });
   }
 
@@ -104,12 +103,10 @@ async function handleUpload(request, env, corsHeaders) {
   const extension = file.name.split('.').pop();
   const filename = `${timestamp}_${randomStr}.${extension}`;
 
-  const normalizedTags = tags.split(',').map(t => t.trim()).filter(t => t.length > 0).join(',');
+  const normalizedTags = tags.split(',').map(t => t.trim()).filter(Boolean).join(',');
 
   await env.IMAGES.put(filename, file.stream(), {
-    httpMetadata: {
-      contentType: file.type,
-    },
+    httpMetadata: { contentType: file.type },
     customMetadata: {
       originalName: file.name,
       customName: customName.trim(),
@@ -122,37 +119,24 @@ async function handleUpload(request, env, corsHeaders) {
   const imageUrl = `${new URL(request.url).origin}/img/${filename}`;
 
   return new Response(JSON.stringify({
-    success: true,
-    filename,
-    url: imageUrl,
-    size: file.size,
-    type: file.type,
-    customName: customName.trim(),
-    tags: normalizedTags
-  }), {
-    headers: { 'Content-Type': 'application/json', ...corsHeaders }
-  });
+    success: true, filename, url: imageUrl, size: file.size, type: file.type,
+    customName: customName.trim(), tags: normalizedTags
+  }), { headers: { 'Content-Type': 'application/json', ...corsHeaders } });
 }
 
 async function handleList(request, env, corsHeaders) {
   if (!verifyPassword(request, env)) {
     return new Response(JSON.stringify({ error: 'Incorrect password' }), {
-      status: 401,
-      headers: { 'Content-Type': 'application/json', ...corsHeaders }
+      status: 401, headers: { 'Content-Type': 'application/json', ...corsHeaders }
     });
   }
 
   const url = new URL(request.url);
   const limit = parseInt(url.searchParams.get('limit') || '1000');
-  const cursor = url.searchParams.get('cursor');
+  const cursor = url.searchParams.get('cursor') || undefined;
 
-  const options = { 
-    limit,
-    include: ['customMetadata'],
-  };
-  if (cursor) {
-    options.cursor = cursor;
-  }
+  const options = { limit, include: ['customMetadata'] };
+  if (cursor) options.cursor = cursor;
 
   const listed = await env.IMAGES.list(options);
 
@@ -171,18 +155,15 @@ async function handleList(request, env, corsHeaders) {
 
   return new Response(JSON.stringify({
     images,
-    truncated: listed.truncated,
-    cursor: listed.cursor
-  }), {
-    headers: { 'Content-Type': 'application/json', ...corsHeaders }
-  });
+    truncated: listed.truncated === true,
+    cursor: listed.cursor || null
+  }), { headers: { 'Content-Type': 'application/json', ...corsHeaders } });
 }
 
 async function handleDelete(request, env, corsHeaders, path) {
   if (!verifyPassword(request, env)) {
     return new Response(JSON.stringify({ error: 'Incorrect password' }), {
-      status: 401,
-      headers: { 'Content-Type': 'application/json', ...corsHeaders }
+      status: 401, headers: { 'Content-Type': 'application/json', ...corsHeaders }
     });
   }
 
@@ -197,64 +178,60 @@ async function handleDelete(request, env, corsHeaders, path) {
 async function handleImage(request, env, path) {
   const filename = path.replace('/img/', '');
   const object = await env.IMAGES.get(filename);
-
-  if (!object) {
-    return new Response('Image not found', { status: 404 });
-  }
+  if (!object) return new Response('Image not found', { status: 404 });
 
   const headers = new Headers();
   object.writeHttpMetadata(headers);
   headers.set('Cache-Control', 'public, max-age=31536000');
   headers.set('Access-Control-Allow-Origin', '*');
-
   return new Response(object.body, { headers });
 }
 
 async function handleStats(request, env, corsHeaders) {
   if (!verifyPassword(request, env)) {
     return new Response(JSON.stringify({ error: 'Incorrect password' }), {
-      status: 401,
-      headers: { 'Content-Type': 'application/json', ...corsHeaders }
+      status: 401, headers: { 'Content-Type': 'application/json', ...corsHeaders }
     });
   }
 
-  const listed = await env.IMAGES.list({ limit: 1000, include: ['customMetadata'] });
+  // 全量分页汇总
+  let cursor;
   let totalSize = 0;
-  
-  for (const obj of listed.objects) {
-    const metadata = obj.customMetadata || {};
-    totalSize += parseInt(metadata.size || obj.size || 0);
-  }
+  let totalImages = 0;
+  do {
+    const listed = await env.IMAGES.list({ limit: 1000, include: ['customMetadata'], cursor });
+    for (const obj of listed.objects) {
+      const metadata = obj.customMetadata || {};
+      totalSize += parseInt(metadata.size || obj.size || 0);
+      totalImages += 1;
+    }
+    cursor = listed.truncated ? listed.cursor : undefined;
+  } while (cursor);
 
   return new Response(JSON.stringify({
-    totalImages: listed.objects.length,
+    totalImages,
     totalSize,
     totalSizeMB: (totalSize / (1024 * 1024)).toFixed(2)
-  }), {
-    headers: { 'Content-Type': 'application/json', ...corsHeaders }
-  });
+  }), { headers: { 'Content-Type': 'application/json', ...corsHeaders } });
 }
 
 async function handleRename(request, env, corsHeaders) {
   if (!verifyPassword(request, env)) {
     return new Response(JSON.stringify({ error: 'Incorrect password' }), {
-      status: 401,
-      headers: { 'Content-Type': 'application/json', ...corsHeaders }
+      status: 401, headers: { 'Content-Type': 'application/json', ...corsHeaders }
     });
   }
 
   const { filename, customName, tags } = await request.json();
-  
   const object = await env.IMAGES.get(filename);
   if (!object) {
     return new Response(JSON.stringify({ error: 'Image not found' }), {
-      status: 404,
-      headers: { 'Content-Type': 'application/json', ...corsHeaders }
+      status: 404, headers: { 'Content-Type': 'application/json', ...corsHeaders }
     });
   }
 
   const oldMetadata = object.customMetadata || {};
-  const normalizedTags = tags ? tags.split(',').map(t => t.trim()).filter(t => t.length > 0).join(',') : '';
+  const normalizedTags = tags ? tags.split(',').map(t => t.trim()).filter(Boolean).join(',') : '';
   
   await env.IMAGES.put(filename, object.body, {
     httpMetadata: object.httpMetadata,
@@ -273,17 +250,14 @@ async function handleRename(request, env, corsHeaders) {
 async function handleBatchDelete(request, env, corsHeaders) {
   if (!verifyPassword(request, env)) {
     return new Response(JSON.stringify({ error: 'Incorrect password' }), {
-      status: 401,
-      headers: { 'Content-Type': 'application/json', ...corsHeaders }
+      status: 401, headers: { 'Content-Type': 'application/json', ...corsHeaders }
     });
   }
 
   const { filenames } = await request.json();
-  
   if (!Array.isArray(filenames) || filenames.length === 0) {
     return new Response(JSON.stringify({ error: 'Invalid file list' }), {
-      status: 400,
-      headers: { 'Content-Type': 'application/json', ...corsHeaders }
+      status: 400, headers: { 'Content-Type': 'application/json', ...corsHeaders }
     });
   }
 
@@ -304,26 +278,27 @@ async function handleBatchDelete(request, env, corsHeaders) {
 async function handleGetTags(request, env, corsHeaders) {
   if (!verifyPassword(request, env)) {
     return new Response(JSON.stringify({ error: 'Incorrect password' }), {
-      status: 401,
-      headers: { 'Content-Type': 'application/json', ...corsHeaders }
+      status: 401, headers: { 'Content-Type': 'application/json', ...corsHeaders }
     });
   }
 
-  const listed = await env.IMAGES.list({ limit: 1000, include: ['customMetadata'] });
+  // 全量分页统计标签
+  let cursor;
   const tagCount = {};
-  
-  for (const obj of listed.objects) {
-    const metadata = obj.customMetadata || {};
-    const tags = metadata.tags || '';
-    if (tags) {
-      tags.split(',').forEach(tag => {
-        const trimmed = tag.trim();
-        if (trimmed) {
-          tagCount[trimmed] = (tagCount[trimmed] || 0) + 1;
-        }
-      });
+  do {
+    const listed = await env.IMAGES.list({ limit: 1000, include: ['customMetadata'], cursor });
+    for (const obj of listed.objects) {
+      const metadata = obj.customMetadata || {};
+      const tags = metadata.tags || '';
+      if (tags) {
+        tags.split(',').forEach(tag => {
+          const trimmed = tag.trim();
+          if (trimmed) tagCount[trimmed] = (tagCount[trimmed] || 0) + 1;
+        });
+      }
     }
-  }
+    cursor = listed.truncated ? listed.cursor : undefined;
+  } while (cursor);
 
   const tagList = Object.entries(tagCount)
     .map(([tag, count]) => ({ tag, count }))
@@ -343,78 +318,21 @@ function getHTML() {
   <title>ImgNaondo - Image Hosting</title>
   <style>
     * { margin: 0; padding: 0; box-sizing: border-box; }
-    
-    body {
-      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-      background: #f5f5f5;
-      color: #333;
-    }
+    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: #f5f5f5; color: #333; }
 
-    .header {
-      background: #2c3e50;
-      color: white;
-      padding: 15px 20px;
-      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-    }
-    
-    .header-content {
-      display: flex; 
-      justify-content: space-between; 
-      align-items: center;
-      max-width: 1400px;
-      margin: 0 auto;
-    }
+    .header { background: #2c3e50; color: white; padding: 15px 20px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
+    .header-content { display: flex; justify-content: space-between; align-items: center; max-width: 1400px; margin: 0 auto; }
+    .header h1 { font-size: 24px; font-weight: 600; }
 
-    .header h1 {
-      font-size: 24px;
-      font-weight: 600;
-    }
+    .container { max-width: 1400px; margin: 0 auto; padding: 20px; }
 
-    .container {
-      max-width: 1400px;
-      margin: 0 auto;
-      padding: 20px;
-    }
+    .login-box { max-width: 400px; margin: 100px auto; background: white; padding: 30px; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); }
+    .login-box h2 { margin-bottom: 20px; text-align: center; }
 
-    .login-box {
-      max-width: 400px;
-      margin: 100px auto;
-      background: white;
-      padding: 30px;
-      border-radius: 8px;
-      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-    }
+    input, select, textarea { width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 4px; font-size: 14px; margin-bottom: 10px; }
+    input:focus, select:focus, textarea:focus { outline: none; border-color: #3498db; }
 
-    .login-box h2 {
-      margin-bottom: 20px;
-      text-align: center;
-    }
-
-    input, select, textarea {
-      width: 100%;
-      padding: 10px;
-      border: 1px solid #ddd;
-      border-radius: 4px;
-      font-size: 14px;
-      margin-bottom: 10px;
-    }
-
-    input:focus, select:focus, textarea:focus {
-      outline: none;
-      border-color: #3498db;
-    }
-
-    button {
-      padding: 10px 20px;
-      background: #3498db;
-      color: white;
-      border: none;
-      border-radius: 4px;
-      cursor: pointer;
-      font-size: 14px;
-      transition: background 0.2s;
-    }
-
+    button { padding: 10px 20px; background: #3498db; color: white; border: none; border-radius: 4px; cursor: pointer; font-size: 14px; transition: background 0.2s; }
     button:hover { background: #2980b9; }
     button:disabled { background: #95a5a6; cursor: not-allowed; }
 
@@ -423,354 +341,87 @@ function getHTML() {
     .btn-success { background: #27ae60; }
     .btn-success:hover { background: #229954; }
 
-    .toolbar {
-      background: white;
-      padding: 15px;
-      border-radius: 8px;
-      margin-bottom: 20px;
-      box-shadow: 0 2px 4px rgba(0,0,0,0.05);
-      display: flex;
-      gap: 10px;
-      flex-wrap: wrap;
-      align-items: center;
-    }
+    .toolbar { background: white; padding: 15px; border-radius: 8px; margin-bottom: 20px; box-shadow: 0 2px 4px rgba(0,0,0,0.05); display: flex; gap: 10px; flex-wrap: wrap; align-items: center; }
+    .toolbar-section { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
 
-    .toolbar-section {
-      display: flex;
-      gap: 10px;
-      align-items: center;
-      flex-wrap: wrap;
-    }
+    .stats { display: flex; gap: 15px; margin-left: auto; font-size: 14px; color: #666; }
 
-    .stats {
-      display: flex;
-      gap: 15px;
-      margin-left: auto;
-      font-size: 14px;
-      color: #666;
-    }
-
-    .upload-box {
-      background: white;
-      border: 2px dashed #ddd;
-      border-radius: 8px;
-      padding: 40px;
-      text-align: center;
-      cursor: pointer;
-      margin-bottom: 20px;
-      transition: all 0.2s;
-    }
-
+    .upload-box { background: white; border: 2px dashed #ddd; border-radius: 8px; padding: 40px; text-align: center; cursor: pointer; margin-bottom: 20px; transition: all 0.2s; }
     .upload-box:hover { border-color: #3498db; background: #f8f9fa; }
     .upload-box.dragging { border-color: #3498db; background: #e3f2fd; }
 
-    .tag-cloud {
-      background: white;
-      padding: 20px;
-      border-radius: 8px;
-      margin-bottom: 20px;
-      box-shadow: 0 2px 4px rgba(0,0,0,0.05);
-    }
+    .tag-cloud { background: white; padding: 20px; border-radius: 8px; margin-bottom: 20px; box-shadow: 0 2px 4px rgba(0,0,0,0.05); }
+    .tag-cloud-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; }
+    .tag-cloud-header h3 { font-size: 16px; font-weight: 600; }
+    .tag-cloud-toggle { background: transparent; color: #3498db; padding: 5px 10px; font-size: 13px; }
 
-    .tag-cloud-header {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      margin-bottom: 15px;
-    }
+    .tag-cloud-content { display: flex; flex-wrap: wrap; gap: 8px; max-height: 0; overflow: hidden; transition: max-height 0.3s ease; }
+    .tag-cloud-content.expanded { max-height: 500px; }
+    .tag-item { display: inline-flex; align-items: center; padding: 6px 12px; background: #ecf0f1; border-radius: 20px; font-size: 13px; cursor: pointer; transition: all 0.2s; user-select: none; }
+    .tag-item:hover { background: #3498db; color: white; transform: translateY(-2px); }
+    .tag-item.active { background: #3498db; color: white; }
+    .tag-item .tag-count { margin-left: 6px; font-size: 11px; opacity: 0.8; font-weight: 600; }
 
-    .tag-cloud-header h3 {
-      font-size: 16px;
-      font-weight: 600;
-    }
+    .gallery { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 15px; }
 
-    .tag-cloud-toggle {
-      background: transparent;
-      color: #3498db;
-      padding: 5px 10px;
-      font-size: 13px;
-    }
+    .image-card { background: white; border-radius: 8px; overflow: visible; box-shadow: 0 2px 4px rgba(0,0,0,0.1); position: relative; transition: transform 0.2s, box-shadow 0.2s; }
+    .image-card:hover { transform: translateY(-2px); box-shadow: 0 4px 8px rgba(0,0,0,0.15); }
+    .image-card.selected { outline: 3px solid #3498db; }
 
-    .tag-cloud-content {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 8px;
-      max-height: 0;
-      overflow: hidden;
-      transition: max-height 0.3s ease;
-    }
+    .image-card img { width: 100%; height: 200px; object-fit: cover; display: block; cursor: zoom-in; border-top-left-radius: 8px; border-top-right-radius: 8px; }
 
-    .tag-cloud-content.expanded {
-      max-height: 500px;
-    }
+    .image-info { padding: 12px; }
+    .image-name { font-weight: 600; margin-bottom: 5px; font-size: 14px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .image-meta { font-size: 12px; color: #666; margin-bottom: 3px; }
+    .image-tags { font-size: 12px; margin-bottom: 8px; display: flex; flex-wrap: wrap; gap: 4px; }
+    .image-tag { background: #e3f2fd; color: #1976d2; padding: 2px 8px; border-radius: 10px; }
 
-    .tag-item {
-      display: inline-flex;
-      align-items: center;
-      padding: 6px 12px;
-      background: #ecf0f1;
-      border-radius: 20px;
-      font-size: 13px;
-      cursor: pointer;
-      transition: all 0.2s;
-      user-select: none;
-    }
+    .image-actions { display: flex; gap: 5px; flex-wrap: wrap; position: relative; }
+    .image-actions button { flex: 1; padding: 6px 10px; font-size: 12px; min-width: 60px; }
 
-    .tag-item:hover {
-      background: #3498db;
-      color: white;
-      transform: translateY(-2px);
-    }
+    .checkbox { position: absolute; top: 10px; left: 10px; width: 20px; height: 20px; cursor: pointer; z-index: 10; }
 
-    .tag-item.active {
-      background: #3498db;
-      color: white;
-    }
-
-    .tag-item .tag-count {
-      margin-left: 6px;
-      font-size: 11px;
-      opacity: 0.8;
-      font-weight: 600;
-    }
-
-    .gallery {
-      display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-      gap: 15px;
-    }
-
-    .image-card {
-      background: white;
-      border-radius: 8px;
-      overflow: hidden;
-      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-      position: relative;
-      transition: transform 0.2s, box-shadow 0.2s;
-    }
-
-    .image-card:hover {
-      transform: translateY(-2px);
-      box-shadow: 0 4px 8px rgba(0,0,0,0.15);
-    }
-
-    .image-card.selected {
-      outline: 3px solid #3498db;
-    }
-
-    .image-card img {
-      width: 100%;
-      height: 200px;
-      object-fit: cover;
-      display: block;
-    }
-
-    .image-info {
-      padding: 12px;
-    }
-
-    .image-name {
-      font-weight: 600;
-      margin-bottom: 5px;
-      font-size: 14px;
-      overflow: hidden;
-      text-overflow: ellipsis;
-      white-space: nowrap;
-    }
-
-    .image-meta {
-      font-size: 12px;
-      color: #666;
-      margin-bottom: 3px;
-    }
-
-    .image-tags {
-      font-size: 12px;
-      margin-bottom: 8px;
-      display: flex;
-      flex-wrap: wrap;
-      gap: 4px;
-    }
-
-    .image-tag {
-      background: #e3f2fd;
-      color: #1976d2;
-      padding: 2px 8px;
-      border-radius: 10px;
-    }
-
-    .image-actions {
-      display: flex;
-      gap: 5px;
-      flex-wrap: wrap;
-    }
-
-    .image-actions button {
-      flex: 1;
-      padding: 6px 10px;
-      font-size: 12px;
-      min-width: 60px;
-    }
-
-    .checkbox {
-      position: absolute;
-      top: 10px;
-      left: 10px;
-      width: 20px;
-      height: 20px;
-      cursor: pointer;
-      z-index: 10;
-    }
-
-    .modal {
-      display: none;
-      position: fixed;
-      top: 0;
-      left: 0;
-      right: 0;
-      bottom: 0;
-      background: rgba(0,0,0,0.7);
-      z-index: 1000;
-      align-items: center;
-      justify-content: center;
-    }
-
+    .modal { display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.7); z-index: 1000; align-items: center; justify-content: center; }
     .modal.show { display: flex; }
+    .modal-content { background: white; padding: 25px; border-radius: 8px; max-width: 500px; width: 90%; max-height: 90vh; overflow-y: auto; }
+    .modal-content h3 { margin-bottom: 15px; }
 
-    .modal-content {
-      background: white;
-      padding: 25px;
-      border-radius: 8px;
-      max-width: 500px;
-      width: 90%;
-      max-height: 90vh;
-      overflow-y: auto;
-    }
+    .form-group { margin-bottom: 15px; }
+    .form-group label { display: block; margin-bottom: 5px; font-weight: 500; font-size: 14px; }
 
-    .modal-content h3 {
-      margin-bottom: 15px;
-    }
-
-    .form-group {
-      margin-bottom: 15px;
-    }
-
-    .form-group label {
-      display: block;
-      margin-bottom: 5px;
-      font-weight: 500;
-      font-size: 14px;
-    }
-
-    .toast {
-      position: fixed;
-      bottom: 20px;
-      right: 20px;
-      background: #333;
-      color: white;
-      padding: 12px 20px;
-      border-radius: 4px;
-      font-size: 14px;
-      z-index: 2000;
-      animation: slideIn 0.3s;
-    }
-
-    @keyframes slideIn {
-      from {
-        transform: translateX(400px);
-        opacity: 0;
-      }
-      to {
-        transform: translateX(0);
-        opacity: 1;
-      }
-    }
+    .toast { position: fixed; bottom: 20px; right: 20px; background: #333; color: white; padding: 12px 20px; border-radius: 4px; font-size: 14px; z-index: 2000; animation: slideIn 0.3s; }
+    @keyframes slideIn { from { transform: translateX(400px); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
 
     .hidden { display: none !important; }
+    .search-box { flex: 1; max-width: 300px; }
+    select { width: auto; padding: 8px 12px; margin-bottom: 0; }
 
-    .search-box {
-      flex: 1;
-      max-width: 300px;
-    }
+    .bulk-actions { display: none; gap: 10px; align-items: center; }
+    .bulk-actions.show { display: flex; }
 
-    select {
-      width: auto;
-      padding: 8px 12px;
-      margin-bottom: 0;
-    }
+    .no-images { text-align: center; padding: 60px 20px; color: #999; font-size: 16px; }
+    .upload-inputs { margin-top: 15px; display: flex; gap: 10px; justify-content: center; flex-wrap: wrap; }
+    .upload-inputs input { max-width: 250px; display: inline-block; margin-bottom: 0; }
 
-    .bulk-actions {
-      display: none;
-      gap: 10px;
-      align-items: center;
-    }
+    .footer { text-align: center; padding: 20px; margin-top: 40px; font-size: 14px; color: #666; border-top: 1px solid #eee; }
+    .footer a { color: #3498db; text-decoration: none; }
+    .footer a:hover { text-decoration: underline; }
 
-    .bulk-actions.show {
-      display: flex;
-    }
+    /* Lightbox & Copy dropdown */
+    .lightbox.modal { align-items: center; justify-content: center; }
+    .lightbox-img { max-width: 85vw; max-height: 85vh; border-radius: 8px; box-shadow: 0 6px 24px rgba(0,0,0,.35); }
+    .lightbox-nav { position: absolute; top: 50%; transform: translateY(-50%); border: none; background: rgba(0,0,0,.5); color: #fff; font-size: 28px; padding: 8px 12px; border-radius: 8px; cursor: pointer; z-index: 1001; }
+    .lightbox-nav.prev { left: 20px; }
+    .lightbox-nav.next { right: 20px; }
 
-    .no-images {
-      text-align: center;
-      padding: 60px 20px;
-      color: #999;
-      font-size: 16px;
-    }
+    .copy-dropdown { position: relative; }
+    .copy-dropdown-menu { position: absolute; right: 0; top: 110%; background: #fff; border: 1px solid #ddd; border-radius: 8px; box-shadow: 0 8px 24px rgba(0,0,0,.12); display: none; min-width: 180px; z-index: 50; }
+    .copy-dropdown.open .copy-dropdown-menu { display: block; }
+    .copy-dropdown-menu button { width: 100%; padding: 8px 12px; background: transparent; color: #333; text-align: left; border: none; }
+    .copy-dropdown-menu button:hover { background: #f5f5f5; }
 
-    .upload-inputs {
-      margin-top: 15px;
-      display: flex;
-      gap: 10px;
-      justify-content: center;
-      flex-wrap: wrap;
-    }
-
-    .upload-inputs input {
-      max-width: 250px;
-      display: inline-block;
-      margin-bottom: 0;
-    }
-    
-    .footer {
-      text-align: center;
-      padding: 20px;
-      margin-top: 40px;
-      font-size: 14px;
-      color: #666;
-      border-top: 1px solid #eee;
-    }
-
-    .footer a {
-      color: #3498db;
-      text-decoration: none;
-    }
-
-    .footer a:hover {
-      text-decoration: underline;
-    }
-
-    @media (max-width: 768px) {
-      .toolbar {
-        flex-direction: column;
-        align-items: stretch;
-      }
-      
-      .toolbar-section {
-        width: 100%;
-      }
-      
-      .search-box {
-        max-width: 100%;
-      }
-      
-      .stats {
-        margin-left: 0;
-        justify-content: space-around;
-      }
-      
-      .gallery {
-        grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
-      }
-    }
+    /* Infinite scroll loader */
+    .loader { text-align: center; padding: 16px; color: #666; }
   </style>
 </head>
 <body>
@@ -837,6 +488,8 @@ function getHTML() {
     </div>
 
     <div class="gallery" id="gallery"></div>
+    <div id="infiniteLoader" class="loader hidden">Loading...</div>
+    <div id="endMessage" class="loader hidden">No more images.</div>
   </div>
 
   <div class="modal" id="editModal" onclick="if(event.target===this)closeEditModal()">
@@ -861,6 +514,13 @@ function getHTML() {
     </div>
   </div>
 
+  <!-- Lightbox -->
+  <div class="modal lightbox" id="lightbox" onclick="if(event.target===this)closeLightbox()">
+    <button class="lightbox-nav prev" onclick="prevImage(event)">‹</button>
+    <img id="lightboxImg" class="lightbox-img" src="" alt="">
+    <button class="lightbox-nav next" onclick="nextImage(event)">›</button>
+  </div>
+
   <footer class="footer">
     <p>&copy; <span id="currentYear"></span> Created by <a href="https://github.com/xdanielf/" target="_blank" rel="noopener noreferrer">xdanielf</a>.</p>
   </footer>
@@ -868,7 +528,11 @@ function getHTML() {
   <script>
     const PASSWORD_KEY = 'imgnaondo_password';
     const LOGIN_TIME_KEY = 'imgnaondo_login_time';
-    const SESSION_DURATION = 24 * 60 * 60 * 1000; // 24 hours in milliseconds
+    const SESSION_DURATION = 24 * 60 * 60 * 1000;
+
+    // 无限滚动配置
+    const PAGE_SIZE = 50;
+    const SCROLL_THRESHOLD = 300; // px
 
     let password = '';
     let allImages = [];
@@ -878,6 +542,15 @@ function getHTML() {
     let currentEditKey = '';
     let activeTag = null;
     let tagCloudExpanded = false;
+
+    // 分页状态
+    let listCursor = null;
+    let hasMore = true;
+    let isLoading = false;
+
+    // Lightbox state
+    let filteredImages = [];
+    let lightboxIndex = -1;
 
     function checkExistingLogin() {
       const storedPassword = localStorage.getItem(PASSWORD_KEY);
@@ -890,7 +563,7 @@ function getHTML() {
         document.getElementById('logoutButton').classList.remove('hidden');
         loadData();
       } else {
-        logout(false); // Clear any expired session data without reloading
+        logout(false);
       }
     }
 
@@ -898,28 +571,19 @@ function getHTML() {
       localStorage.removeItem(PASSWORD_KEY);
       localStorage.removeItem(LOGIN_TIME_KEY);
       password = '';
-      if (reload) {
-        location.reload();
-      }
+      if (reload) location.reload();
     }
 
     async function login() {
       const inputPassword = document.getElementById('passwordInput').value;
-      if (!inputPassword) {
-        showToast('Please enter the password');
-        return;
-      }
+      if (!inputPassword) return showToast('Please enter the password');
 
       try {
-        const res = await fetch('/api/stats', {
-          headers: { 'Authorization': 'Bearer ' + inputPassword }
-        });
-
+        const res = await fetch('/api/stats', { headers: { 'Authorization': 'Bearer ' + inputPassword } });
         if (res.ok) {
           password = inputPassword;
           localStorage.setItem(PASSWORD_KEY, password);
           localStorage.setItem(LOGIN_TIME_KEY, Date.now());
-
           document.getElementById('loginSection').classList.add('hidden');
           document.getElementById('mainSection').classList.remove('hidden');
           document.getElementById('logoutButton').classList.remove('hidden');
@@ -933,47 +597,80 @@ function getHTML() {
     }
 
     async function loadData() {
-      await Promise.all([loadStats(), loadGallery(), loadTags()]);
+      await Promise.all([loadStats(), loadInitialGallery(), loadTags()]);
     }
 
     async function loadStats() {
       try {
-        const res = await fetch('/api/stats', {
-          headers: { 'Authorization': 'Bearer ' + password }
-        });
+        const res = await fetch('/api/stats', { headers: { 'Authorization': 'Bearer ' + password } });
         const data = await res.json();
         document.getElementById('totalImages').textContent = data.totalImages;
         document.getElementById('totalSize').textContent = data.totalSizeMB + ' MB';
-      } catch (error) {
-        console.error('Failed to load stats:', error);
-      }
+      } catch (error) { console.error('Failed to load stats:', error); }
     }
 
-    async function loadGallery() {
+    // —— 无限滚动：初始化 + 取下一页 ——
+    async function loadInitialGallery() {
+      // reset
+      allImages = [];
+      listCursor = null;
+      hasMore = true;
+      isLoading = false;
+      document.getElementById('gallery').innerHTML = '';
+      document.getElementById('endMessage').classList.add('hidden');
+
+      await loadNextPage(); // 首次加载 50
+    }
+
+    async function loadNextPage() {
+      if (!hasMore || isLoading) return;
+      isLoading = true;
+      showBottomLoader(true);
       try {
-        const res = await fetch('/api/list?limit=1000', {
+        const qs = new URLSearchParams({ limit: String(PAGE_SIZE) });
+        if (listCursor) qs.set('cursor', listCursor);
+        const res = await fetch('/api/list?' + qs.toString(), {
           headers: { 'Authorization': 'Bearer ' + password }
         });
         const data = await res.json();
-        allImages = data.images;
-        applyFilters();
-      } catch (error) {
-        console.error('Failed to load gallery:', error);
-        showToast('Failed to load images');
+
+        // 追加并去重
+        const existed = new Set(allImages.map(i => i.key));
+        for (const img of data.images) {
+          if (!existed.has(img.key)) {
+            allImages.push(img);
+          }
+        }
+
+        listCursor = data.cursor;
+        hasMore = data.truncated && !!data.cursor;
+
+        applyFilters(); // 统一排序/筛选并渲染
+
+        if (!hasMore) {
+          document.getElementById('endMessage').classList.remove('hidden');
+        }
+      } catch (e) {
+        console.error(e);
+        showToast('Failed to load more images');
+      } finally {
+        isLoading = false;
+        showBottomLoader(false);
       }
+    }
+
+    function showBottomLoader(show) {
+      const el = document.getElementById('infiniteLoader');
+      if (show) el.classList.remove('hidden'); else el.classList.add('hidden');
     }
 
     async function loadTags() {
       try {
-        const res = await fetch('/api/tags', {
-          headers: { 'Authorization': 'Bearer ' + password }
-        });
+        const res = await fetch('/api/tags', { headers: { 'Authorization': 'Bearer ' + password } });
         const data = await res.json();
         allTags = data.tags;
         renderTagCloud();
-      } catch (error) {
-        console.error('Failed to load tags:', error);
-      }
+      } catch (error) { console.error('Failed to load tags:', error); }
     }
 
     function renderTagCloud() {
@@ -982,12 +679,9 @@ function getHTML() {
         container.innerHTML = '<div style="color: #999; text-align: center; padding: 20px 0;">No tags yet</div>';
         return;
       }
-
       container.innerHTML = allTags.map(({tag, count}) => {
         const escapedTag = tag.replace(/'/g, "\\'");
-        return \`<div class="tag-item \${activeTag === tag ? 'active' : ''}" onclick="filterByTag('\${escapedTag}')">
-          \${tag}<span class="tag-count">\${count}</span>
-        </div>\`;
+        return \`<div class="tag-item \${activeTag === tag ? 'active' : ''}" onclick="filterByTag('\${escapedTag}')">\${tag}<span class="tag-count">\${count}</span></div>\`;
       }).join('');
     }
 
@@ -995,24 +689,13 @@ function getHTML() {
       tagCloudExpanded = !tagCloudExpanded;
       const content = document.getElementById('tagCloudContent');
       const btn = document.querySelector('.tag-cloud-toggle');
-      
-      if (tagCloudExpanded) {
-        content.classList.add('expanded');
-        btn.textContent = 'Collapse';
-      } else {
-        content.classList.remove('expanded');
-        btn.textContent = 'Expand';
-      }
+      if (tagCloudExpanded) { content.classList.add('expanded'); btn.textContent = 'Collapse'; }
+      else { content.classList.remove('expanded'); btn.textContent = 'Expand'; }
     }
 
     function filterByTag(tag) {
-      if (activeTag === tag) {
-        activeTag = null;
-        document.getElementById('searchInput').value = '';
-      } else {
-        activeTag = tag;
-        document.getElementById('searchInput').value = tag;
-      }
+      if (activeTag === tag) { activeTag = null; document.getElementById('searchInput').value = ''; }
+      else { activeTag = tag; document.getElementById('searchInput').value = tag; }
       renderTagCloud();
       applyFilters();
     }
@@ -1028,7 +711,7 @@ function getHTML() {
       });
 
       filtered.sort((a, b) => {
-        switch(sortBy) {
+        switch (sortBy) {
           case 'time-desc': return new Date(b.uploadTime) - new Date(a.uploadTime);
           case 'time-asc': return new Date(a.uploadTime) - new Date(b.uploadTime);
           case 'size-desc': return b.size - a.size;
@@ -1039,37 +722,47 @@ function getHTML() {
         }
       });
 
+      filteredImages = filtered.slice();
       renderGallery(filtered);
     }
 
     function renderGallery(images) {
       const gallery = document.getElementById('gallery');
-      
       if (images.length === 0) {
         gallery.innerHTML = '<div class="no-images">No images found.</div>';
         return;
       }
 
+      // 全量重绘（简单稳定；每页仅 50，性能 OK）
       gallery.innerHTML = '';
-
       images.forEach(img => {
         const card = document.createElement('div');
         card.className = 'image-card' + (selectedImages.has(img.key) ? ' selected' : '');
         
         const displayName = img.customName || img.originalName;
-        const tagsHtml = img.tags ? 
-          img.tags.split(',').map(tag => \`<span class="image-tag">\${tag.trim()}</span>\`).join('') : '';
+        const safeAlt = displayName.replace(/'/g, "\\'").replace(/"/g, '&quot;');
+        const tagsHtml = img.tags ? img.tags.split(',').map(tag => \`<span class="image-tag">\${tag.trim()}</span>\`).join('') : '';
         
         card.innerHTML = \`
           \${selectMode ? \`<input type="checkbox" class="checkbox" \${selectedImages.has(img.key) ? 'checked' : ''} onchange="toggleSelect('\${img.key}')">\` : ''}
-          <img src="\${img.url}" alt="\${displayName}" loading="lazy" onerror="this.src='data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 width=%22200%22 height=%22200%22%3E%3Crect fill=%22%23ddd%22 width=%22200%22 height=%22200%22/%3E%3Ctext x=%2250%25%22 y=%2250%25%22 dominant-baseline=%22middle%22 text-anchor=%22middle%22 fill=%22%23999%22%3ELoad failed%3C/text%3E%3C/svg%3E'">
+          <img src="\${img.url}" alt="\${displayName}" loading="lazy"
+               onclick="openLightbox('\${img.key}')"
+               onerror="this.src='data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 width=%22200%22 height=%22200%22%3E%3Crect fill=%22%23ddd%22 width=%22200%22 height=%22200%22/%3E%3Ctext x=%2250%25%22 y=%2250%25%22 dominant-baseline=%22middle%22 text-anchor=%22middle%22 fill=%22%23999%22%3ELoad failed%3C/text%3E%3C/svg%3E'">
           <div class="image-info">
             <div class="image-name" title="\${displayName}">\${displayName}</div>
             <div class="image-meta">Size: \${formatSize(img.size)}</div>
             <div class="image-meta">\${new Date(img.uploadTime).toLocaleString()}</div>
             \${tagsHtml ? \`<div class="image-tags">\${tagsHtml}</div>\` : ''}
             <div class="image-actions">
-              <button onclick="copyUrl('\${img.url}')">Copy</button>
+              <div class="copy-dropdown">
+                <button onclick="toggleCopyMenu(event)">Copy ▾</button>
+                <div class="copy-dropdown-menu" onclick="event.stopPropagation()">
+                  <button onclick="copyInFormat('\${img.url}', '\${safeAlt}', 'url')">URL</button>
+                  <button onclick="copyInFormat('\${img.url}', '\${safeAlt}', 'html')">HTML &lt;img&gt;</button>
+                  <button onclick="copyInFormat('\${img.url}', '\${safeAlt}', 'md')">Markdown</button>
+                  <button onclick="copyInFormat('\${img.url}', '\${safeAlt}', 'bb')">BBCode</button>
+                </div>
+              </div>
               <button onclick="openEdit('\${img.key}')">Edit</button>
               <button class="btn-danger" onclick="deleteImage('\${img.key}')">Delete</button>
             </div>
@@ -1079,11 +772,7 @@ function getHTML() {
       });
     }
 
-    function handleFileSelect(files) {
-      if (files.length > 0) {
-        uploadFiles(files);
-      }
-    }
+    function handleFileSelect(files) { if (files.length > 0) uploadFiles(files); }
 
     async function uploadFiles(files) {
       const customName = document.getElementById('uploadCustomName').value.trim();
@@ -1093,12 +782,10 @@ function getHTML() {
       const uploadProgress = document.getElementById('uploadProgress');
       const uploadInputs = document.querySelectorAll('.upload-inputs input');
 
-      let successCount = 0;
-      let failCount = 0;
+      let successCount = 0, failCount = 0;
 
       try {
-        uploadButton.disabled = true;
-        uploadButton.textContent = 'Uploading...';
+        uploadButton.disabled = true; uploadButton.textContent = 'Uploading...';
         uploadInputs.forEach(input => input.disabled = true);
 
         for (let i = 0; i < files.length; i++) {
@@ -1107,54 +794,34 @@ function getHTML() {
 
           const formData = new FormData();
           formData.append('file', file);
-          
-          if (customName) {
-            const finalName = files.length > 1 ? \`\${customName}_\${i + 1}\` : customName;
-            formData.append('customName', finalName);
-          }
-          
-          if (tags) {
-            formData.append('tags', tags);
-          }
+          if (customName) formData.append('customName', files.length > 1 ? \`\${customName}_\${i + 1}\` : customName);
+          if (tags) formData.append('tags', tags);
 
           try {
             const res = await fetch('/api/upload', {
-              method: 'POST',
-              headers: { 'Authorization': 'Bearer ' + password },
-              body: formData
+              method: 'POST', headers: { 'Authorization': 'Bearer ' + password }, body: formData
             });
-
             const data = await res.json();
-            if (data.success) {
-              successCount++;
-            } else {
-              failCount++;
-              console.error('Upload failed:', data.error);
-            }
-          } catch (error) {
-            failCount++;
-            console.error('Upload exception:', error);
-          }
+            if (data.success) successCount++; else { failCount++; console.error('Upload failed:', data.error); }
+          } catch (error) { failCount++; console.error('Upload exception:', error); }
         }
       } finally {
-        uploadButton.disabled = false;
-        uploadButton.textContent = 'Select Files';
+        uploadButton.disabled = false; uploadButton.textContent = 'Select Files';
         uploadProgress.textContent = '';
         uploadInputs.forEach(input => input.disabled = false);
       }
 
-      if (successCount > 0) {
-        showToast(\`✓ Successfully uploaded \${successCount} image(s)\`);
-      }
-      if (failCount > 0) {
-        showToast(\`✗ \${failCount} image(s) failed to upload\`);
-      }
+      if (successCount > 0) showToast(\`✓ Successfully uploaded \${successCount} image(s)\`);
+      if (failCount > 0) showToast(\`✗ \${failCount} image(s) failed to upload\`);
 
       document.getElementById('uploadCustomName').value = '';
       document.getElementById('uploadTags').value = '';
       document.getElementById('fileInput').value = '';
       
-      await loadData();
+      // 重新初始化分页并加载第一页
+      await loadInitialGallery();
+      await loadStats();
+      await loadTags();
     }
 
     async function deleteImage(key) {
@@ -1162,13 +829,16 @@ function getHTML() {
 
       try {
         const res = await fetch(\`/api/delete/\${key}\`, {
-          method: 'DELETE',
-          headers: { 'Authorization': 'Bearer ' + password }
+          method: 'DELETE', headers: { 'Authorization': 'Bearer ' + password }
         });
 
         if (res.ok) {
           showToast('Image deleted successfully');
-          loadData();
+          // 从本地列表移除并局部刷新
+          allImages = allImages.filter(i => i.key !== key);
+          selectedImages.delete(key);
+          document.getElementById('selectedCount').textContent = \`Selected: \${selectedImages.size}\`;
+          applyFilters();
         } else {
           showToast('Failed to delete image');
         }
@@ -1182,6 +852,7 @@ function getHTML() {
       if (!selectMode) {
         selectedImages.clear();
         document.getElementById('bulkActions').classList.remove('show');
+        document.getElementById('selectedCount').textContent = 'Selected: 0';
       } else {
         document.getElementById('bulkActions').classList.add('show');
       }
@@ -1189,11 +860,8 @@ function getHTML() {
     }
 
     function toggleSelect(key) {
-      if (selectedImages.has(key)) {
-        selectedImages.delete(key);
-      } else {
-        selectedImages.add(key);
-      }
+      if (selectedImages.has(key)) selectedImages.delete(key);
+      else selectedImages.add(key);
       document.getElementById('selectedCount').textContent = \`Selected: \${selectedImages.size}\`;
       applyFilters();
     }
@@ -1210,41 +878,9 @@ function getHTML() {
       applyFilters();
     }
 
-    async function batchDelete() {
-      if (selectedImages.size === 0) {
-        showToast('Please select images first');
-        return;
-      }
-
-      if (!confirm(\`Are you sure you want to delete \${selectedImages.size} image(s)?\`)) return;
-
-      try {
-        const res = await fetch('/api/batch-delete', {
-          method: 'POST',
-          headers: {
-            'Authorization': 'Bearer ' + password,
-            'Content-Type': 'application/json'
-          },
-          body: JSON.stringify({ filenames: Array.from(selectedImages) })
-        });
-
-        if (res.ok) {
-          showToast(\`Successfully deleted \${selectedImages.size} image(s)\`);
-          selectedImages.clear();
-          toggleSelectMode();
-          loadData();
-        } else {
-          showToast('Failed to delete images');
-        }
-      } catch (error) {
-        showToast('Error deleting images: ' + error.message);
-      }
-    }
-
     function openEdit(key) {
       const img = allImages.find(i => i.key === key);
       if (!img) return;
-
       currentEditKey = key;
       document.getElementById('editCustomName').value = img.customName || '';
       document.getElementById('editTags').value = img.tags || '';
@@ -1252,9 +888,7 @@ function getHTML() {
       document.getElementById('editModal').classList.add('show');
     }
 
-    function closeEditModal() {
-      document.getElementById('editModal').classList.remove('show');
-    }
+    function closeEditModal() { document.getElementById('editModal').classList.remove('show'); }
 
     async function saveEdit() {
       const customName = document.getElementById('editCustomName').value.trim();
@@ -1263,21 +897,17 @@ function getHTML() {
       try {
         const res = await fetch('/api/rename', {
           method: 'POST',
-          headers: {
-            'Authorization': 'Bearer ' + password,
-            'Content-Type': 'application/json'
-          },
-          body: JSON.stringify({
-            filename: currentEditKey,
-            customName,
-            tags
-          })
+          headers: { 'Authorization': 'Bearer ' + password, 'Content-Type': 'application/json' },
+          body: JSON.stringify({ filename: currentEditKey, customName, tags })
         });
 
         if (res.ok) {
           showToast('Saved successfully');
+          // 更新本地数据
+          const idx = allImages.findIndex(i => i.key === currentEditKey);
+          if (idx >= 0) { allImages[idx].customName = customName; allImages[idx].tags = tags; }
           closeEditModal();
-          loadData();
+          applyFilters();
         } else {
           const data = await res.json();
           showToast('Save failed: ' + (data.error || 'Unknown error'));
@@ -1287,12 +917,54 @@ function getHTML() {
       }
     }
 
-    function copyUrl(url) {
-      navigator.clipboard.writeText(url).then(() => {
-        showToast('✓ Link copied to clipboard');
-      }).catch(() => {
-        showToast('✗ Failed to copy link');
-      });
+    // —— Clipboard：带回退 ——
+    async function attemptCopy(text) {
+      if (navigator.clipboard && window.isSecureContext) {
+        await navigator.clipboard.writeText(text);
+        return;
+      }
+      const ta = document.createElement('textarea');
+      ta.value = text;
+      ta.setAttribute('readonly', '');
+      ta.style.position = 'fixed';
+      ta.style.left = '-9999px';
+      ta.style.top = '0';
+      document.body.appendChild(ta);
+      ta.select();
+      ta.setSelectionRange(0, ta.value.length);
+      const ok = document.execCommand('copy');
+      document.body.removeChild(ta);
+      if (!ok) throw new Error('execCommand copy failed');
+    }
+
+    function buildCopyText(url, alt, fmt) {
+      switch (fmt) {
+        case 'url': return url;
+        case 'html': return \`<img src="\${url}" alt="\${alt}">\`;
+        case 'md': return \`![\${alt}](\${url})\`;
+        case 'bb': return \`[img]\${url}[/img]\`;
+        default: return url;
+      }
+    }
+
+    async function copyInFormat(url, alt, fmt) {
+      const text = buildCopyText(url, alt, fmt);
+      try { await attemptCopy(text); showToast('✓ Copied'); }
+      catch (e) { console.error(e); showToast('✗ Copy failed'); }
+      finally { document.querySelectorAll('.copy-dropdown.open').forEach(el => el.classList.remove('open')); }
+    }
+
+    function toggleCopyMenu(e) {
+      e.stopPropagation();
+      const wrap = e.target.closest('.copy-dropdown');
+      document.querySelectorAll('.copy-dropdown.open').forEach(el => { if (el !== wrap) el.classList.remove('open'); });
+      wrap.classList.toggle('open');
+    }
+
+    // 旧的单格式复制（保留）
+    async function copyUrl(url) {
+      try { await attemptCopy(url); showToast('✓ Link copied to clipboard'); }
+      catch { showToast('✗ Failed to copy link'); }
     }
 
     function formatSize(bytes) {
@@ -1308,45 +980,137 @@ function getHTML() {
       document.body.appendChild(toast);
       setTimeout(() => toast.remove(), 2500);
     }
-    
-    // --- Event Listeners and Initial Load ---
-    
+
+    // Lightbox
+    function openLightbox(key) {
+      lightboxIndex = filteredImages.findIndex(i => i.key === key);
+      if (lightboxIndex < 0) return;
+      updateLightbox();
+      document.getElementById('lightbox').classList.add('show');
+    }
+    function updateLightbox() {
+      const img = filteredImages[lightboxIndex];
+      if (!img) return;
+      const el = document.getElementById('lightboxImg');
+      el.src = img.url;
+      el.alt = img.customName || img.originalName;
+    }
+    function closeLightbox() { document.getElementById('lightbox').classList.remove('show'); }
+    function prevImage(e) { e && e.stopPropagation(); if (lightboxIndex > 0) { lightboxIndex--; updateLightbox(); } }
+    function nextImage(e) { e && e.stopPropagation(); if (lightboxIndex < filteredImages.length - 1) { lightboxIndex++; updateLightbox(); } }
+
+    // —— 批量删除（Delete Selected） ——
+    async function batchDelete() {
+      if (!selectMode) {
+        showToast('Please enable Bulk Select first');
+        return;
+      }
+      const keys = Array.from(selectedImages);
+      if (keys.length === 0) {
+        showToast('Please select images first');
+        return;
+      }
+      if (!confirm(\`Are you sure you want to delete \${keys.length} image(s)?\`)) return;
+
+      // 禁用按钮防重复
+      const bulkWrap = document.getElementById('bulkActions');
+      const delBtn = bulkWrap.querySelector('.btn-danger');
+      const oldText = delBtn.textContent;
+      delBtn.disabled = true;
+      delBtn.textContent = 'Deleting...';
+
+      try {
+        const res = await fetch('/api/batch-delete', {
+          method: 'POST',
+          headers: {
+            'Authorization': 'Bearer ' + password,
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({ filenames: keys })
+        });
+
+        const data = await res.json().catch(() => ({}));
+        if (!res.ok) throw new Error(data.error || 'Request failed');
+
+        // 本地移除已删图片
+        const delSet = new Set(keys);
+        allImages = allImages.filter(img => !delSet.has(img.key));
+        selectedImages.clear();
+        document.getElementById('selectedCount').textContent = 'Selected: 0';
+        applyFilters();
+
+        // 可选：删除后退出批量模式
+        // toggleSelectMode();
+
+        showToast(\`Successfully deleted \${keys.length} image(s)\`);
+      } catch (e) {
+        console.error(e);
+        showToast('Failed to delete images: ' + e.message);
+      } finally {
+        delBtn.disabled = false;
+        delBtn.textContent = oldText;
+      }
+    }
+
+    // 点击空白收起复制菜单
+    document.addEventListener('click', () => {
+      document.querySelectorAll('.copy-dropdown.open').forEach(el => el.classList.remove('open'));
+    });
+
+    // 支持粘贴上传
+    window.addEventListener('paste', async (e) => {
+      const items = e.clipboardData && e.clipboardData.items;
+      if (!items || !items.length) return;
+
+      const files = [];
+      for (const it of items) {
+        if (it.type && it.type.startsWith('image/')) {
+          const blob = it.getAsFile();
+          const name = \`pasted_\${Date.now()}.\${(blob.type.split('/')[1] || 'png')}\`;
+          files.push(new File([blob], name, { type: blob.type || 'image/png' }));
+        }
+      }
+      if (!files.length) return;
+
+      if (!password) { showToast('Please login first'); return; }
+      showToast(\`Uploading \${files.length} pasted image(s)...\`);
+      await uploadFiles(files);
+    });
+
+    // 滚动监听：接近页面底部加载下一页
+    window.addEventListener('scroll', () => {
+      if (!hasMore || isLoading) return;
+      const scrollBottom = document.documentElement.scrollHeight - (window.scrollY + window.innerHeight);
+      if (scrollBottom < SCROLL_THRESHOLD) loadNextPage();
+    });
+
     document.addEventListener('DOMContentLoaded', () => {
       checkExistingLogin();
       document.getElementById('currentYear').textContent = new Date().getFullYear();
     });
 
     const uploadArea = document.getElementById('uploadArea');
-    
-    uploadArea.addEventListener('dragover', (e) => {
-      e.preventDefault();
-      uploadArea.classList.add('dragging');
-    });
-    
-    uploadArea.addEventListener('dragleave', (e) => {
-      if (e.target === uploadArea) {
-        uploadArea.classList.remove('dragging');
-      }
-    });
-    
+    uploadArea.addEventListener('dragover', (e) => { e.preventDefault(); uploadArea.classList.add('dragging'); });
+    uploadArea.addEventListener('dragleave', (e) => { if (e.target === uploadArea) uploadArea.classList.remove('dragging'); });
     uploadArea.addEventListener('drop', (e) => {
-      e.preventDefault();
-      uploadArea.classList.remove('dragging');
+      e.preventDefault(); uploadArea.classList.remove('dragging');
       const files = Array.from(e.dataTransfer.files).filter(f => f.type.startsWith('image/'));
       if (files.length > 0) uploadFiles(files);
     });
 
     document.getElementById('searchInput').addEventListener('input', () => {
-      activeTag = null;
-      renderTagCloud();
-      applyFilters();
+      activeTag = null; renderTagCloud(); applyFilters();
     });
 
+    // 键盘：Esc 关闭弹窗；左右切换 Lightbox
     document.addEventListener('keydown', (e) => {
-      if (e.key === 'Escape') {
-        if (document.getElementById('editModal').classList.contains('show')) {
-          closeEditModal();
-        }
+      const editOpen = document.getElementById('editModal').classList.contains('show');
+      const lightboxOpen = document.getElementById('lightbox').classList.contains('show');
+      if (e.key === 'Escape') { if (editOpen) closeEditModal(); if (lightboxOpen) closeLightbox(); }
+      else if (lightboxOpen && (e.key === 'ArrowLeft' || e.key === 'ArrowRight')) {
+        e.preventDefault();
+        if (e.key === 'ArrowLeft') prevImage();
+        if (e.key === 'ArrowRight') nextImage();
       }
     });
   </script>
