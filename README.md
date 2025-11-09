@@ -1,3 +1,5 @@
+> Update v2.0 introduces new features, streamlines the code, and fixes known bugs.
+
 # ImgNaondo
 
 A fast, lean and powerful image hosting solution designed specifically for Cloudflare Workers.
