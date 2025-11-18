@@ -194,7 +194,6 @@ async function handleStats(request, env, corsHeaders) {
     });
   }
 
-  // 全量分页汇总
   let cursor;
   let totalSize = 0;
   let totalImages = 0;
@@ -282,7 +281,6 @@ async function handleGetTags(request, env, corsHeaders) {
     });
   }
 
-  // 全量分页统计标签
   let cursor;
   const tagCount = {};
   do {
@@ -319,95 +317,69 @@ function getHTML() {
   <style>
     * { margin: 0; padding: 0; box-sizing: border-box; }
     body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: #f5f5f5; color: #333; }
-
     .header { background: #2c3e50; color: white; padding: 15px 20px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
     .header-content { display: flex; justify-content: space-between; align-items: center; max-width: 1400px; margin: 0 auto; }
     .header h1 { font-size: 24px; font-weight: 600; }
-
     .container { max-width: 1400px; margin: 0 auto; padding: 20px; }
-
     .login-box { max-width: 400px; margin: 100px auto; background: white; padding: 30px; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); }
     .login-box h2 { margin-bottom: 20px; text-align: center; }
-
     input, select, textarea { width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 4px; font-size: 14px; margin-bottom: 10px; }
     input:focus, select:focus, textarea:focus { outline: none; border-color: #3498db; }
-
     button { padding: 10px 20px; background: #3498db; color: white; border: none; border-radius: 4px; cursor: pointer; font-size: 14px; transition: background 0.2s; }
     button:hover { background: #2980b9; }
     button:disabled { background: #95a5a6; cursor: not-allowed; }
-
     .btn-danger { background: #e74c3c; }
     .btn-danger:hover { background: #c0392b; }
     .btn-success { background: #27ae60; }
     .btn-success:hover { background: #229954; }
-
     .toolbar { background: white; padding: 15px; border-radius: 8px; margin-bottom: 20px; box-shadow: 0 2px 4px rgba(0,0,0,0.05); display: flex; gap: 10px; flex-wrap: wrap; align-items: center; }
     .toolbar-section { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
-
     .stats { display: flex; gap: 15px; margin-left: auto; font-size: 14px; color: #666; }
-
     .upload-box { background: white; border: 2px dashed #ddd; border-radius: 8px; padding: 40px; text-align: center; cursor: pointer; margin-bottom: 20px; transition: all 0.2s; }
     .upload-box:hover { border-color: #3498db; background: #f8f9fa; }
     .upload-box.dragging { border-color: #3498db; background: #e3f2fd; }
-
     .tag-cloud { background: white; padding: 20px; border-radius: 8px; margin-bottom: 20px; box-shadow: 0 2px 4px rgba(0,0,0,0.05); }
     .tag-cloud-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; }
     .tag-cloud-header h3 { font-size: 16px; font-weight: 600; }
     .tag-cloud-toggle { background: transparent; color: #3498db; padding: 5px 10px; font-size: 13px; }
-
     .tag-cloud-content { display: flex; flex-wrap: wrap; gap: 8px; max-height: 0; overflow: hidden; transition: max-height 0.3s ease; }
     .tag-cloud-content.expanded { max-height: 500px; }
     .tag-item { display: inline-flex; align-items: center; padding: 6px 12px; background: #ecf0f1; border-radius: 20px; font-size: 13px; cursor: pointer; transition: all 0.2s; user-select: none; }
     .tag-item:hover { background: #3498db; color: white; transform: translateY(-2px); }
     .tag-item.active { background: #3498db; color: white; }
     .tag-item .tag-count { margin-left: 6px; font-size: 11px; opacity: 0.8; font-weight: 600; }
-
     .gallery { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 15px; }
-
     .image-card { background: white; border-radius: 8px; overflow: visible; box-shadow: 0 2px 4px rgba(0,0,0,0.1); position: relative; transition: transform 0.2s, box-shadow 0.2s; }
     .image-card:hover { transform: translateY(-2px); box-shadow: 0 4px 8px rgba(0,0,0,0.15); }
     .image-card.selected { outline: 3px solid #3498db; }
-
     .image-card img { width: 100%; height: 200px; object-fit: cover; display: block; cursor: zoom-in; border-top-left-radius: 8px; border-top-right-radius: 8px; }
-
     .image-info { padding: 12px; }
     .image-name { font-weight: 600; margin-bottom: 5px; font-size: 14px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
     .image-meta { font-size: 12px; color: #666; margin-bottom: 3px; }
     .image-tags { font-size: 12px; margin-bottom: 8px; display: flex; flex-wrap: wrap; gap: 4px; }
     .image-tag { background: #e3f2fd; color: #1976d2; padding: 2px 8px; border-radius: 10px; }
-
-    .image-actions { display: flex; gap: 5px; flex-wrap: wrap; position: relative; }
+    .image-actions { display: flex; gap: 5px; flex-wrap: wrap; }
     .image-actions button { flex: 1; padding: 6px 10px; font-size: 12px; min-width: 60px; }
-
     .checkbox { position: absolute; top: 10px; left: 10px; width: 20px; height: 20px; cursor: pointer; z-index: 10; }
-
     .modal { display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.7); z-index: 1000; align-items: center; justify-content: center; }
     .modal.show { display: flex; }
     .modal-content { background: white; padding: 25px; border-radius: 8px; max-width: 500px; width: 90%; max-height: 90vh; overflow-y: auto; }
     .modal-content h3 { margin-bottom: 15px; }
-
     .form-group { margin-bottom: 15px; }
     .form-group label { display: block; margin-bottom: 5px; font-weight: 500; font-size: 14px; }
-
     .toast { position: fixed; bottom: 20px; right: 20px; background: #333; color: white; padding: 12px 20px; border-radius: 4px; font-size: 14px; z-index: 2000; animation: slideIn 0.3s; }
     @keyframes slideIn { from { transform: translateX(400px); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
-
     .hidden { display: none !important; }
     .search-box { flex: 1; max-width: 300px; }
     select { width: auto; padding: 8px 12px; margin-bottom: 0; }
-
     .bulk-actions { display: none; gap: 10px; align-items: center; }
     .bulk-actions.show { display: flex; }
-
     .no-images { text-align: center; padding: 60px 20px; color: #999; font-size: 16px; }
     .upload-inputs { margin-top: 15px; display: flex; gap: 10px; justify-content: center; flex-wrap: wrap; }
     .upload-inputs input { max-width: 250px; display: inline-block; margin-bottom: 0; }
-
     .footer { text-align: center; padding: 20px; margin-top: 40px; font-size: 14px; color: #666; border-top: 1px solid #eee; }
     .footer a { color: #3498db; text-decoration: none; }
     .footer a:hover { text-decoration: underline; }
-
-    /* Lightbox & Copy dropdown */
     .lightbox.modal { align-items: center; justify-content: center; }
     .lightbox-img { max-width: 85vw; max-height: 85vh; border-radius: 8px; box-shadow: 0 6px 24px rgba(0,0,0,.35); }
     .lightbox-nav { position: absolute; top: 50%; transform: translateY(-50%); border: none; background: rgba(0,0,0,.5); color: #fff; font-size: 28px; padding: 8px 12px; border-radius: 8px; cursor: pointer; z-index: 1001; }
@@ -415,12 +387,42 @@ function getHTML() {
     .lightbox-nav.next { right: 20px; }
 
     .copy-dropdown { position: relative; }
-    .copy-dropdown-menu { position: absolute; right: 0; top: 110%; background: #fff; border: 1px solid #ddd; border-radius: 8px; box-shadow: 0 8px 24px rgba(0,0,0,.12); display: none; min-width: 180px; z-index: 50; }
-    .copy-dropdown.open .copy-dropdown-menu { display: block; }
-    .copy-dropdown-menu button { width: 100%; padding: 8px 12px; background: transparent; color: #333; text-align: left; border: none; }
-    .copy-dropdown-menu button:hover { background: #f5f5f5; }
+    .copy-dropdown-menu {
+      position: absolute;
+      right: 0;
+      bottom: calc(100% + 5px);
+      background: #fff;
+      border-radius: 6px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+      padding: 5px;
+      min-width: 150px;
+      z-index: 50;
+      opacity: 0;
+      transform: translateY(10px) scale(0.95);
+      visibility: hidden;
+      pointer-events: none;
+      transition: opacity 0.15s ease-out, transform 0.15s ease-out;
+    }
+    .copy-dropdown.open .copy-dropdown-menu {
+      opacity: 1;
+      transform: translateY(0) scale(1);
+      visibility: visible;
+      pointer-events: auto;
+    }
+    .copy-dropdown-menu button {
+      width: 100%;
+      padding: 8px 12px;
+      background: transparent;
+      color: #333;
+      text-align: left;
+      border: none;
+      border-radius: 4px;
+      font-size: 13px;
+    }
+    .copy-dropdown-menu button:hover {
+      background: #f0f0f0;
+    }
 
-    /* Infinite scroll loader */
     .loader { text-align: center; padding: 16px; color: #666; }
   </style>
 </head>
@@ -431,13 +433,11 @@ function getHTML() {
       <button id="logoutButton" class="hidden btn-danger" onclick="logout()" style="padding: 8px 15px;">Logout</button>
     </div>
   </div>
-
   <div id="loginSection" class="login-box">
     <h2>Login</h2>
     <input type="password" id="passwordInput" placeholder="Enter access password" onkeypress="if(event.key==='Enter')login()">
     <button style="width: 100%;" onclick="login()">Login</button>
   </div>
-
   <div id="mainSection" class="container hidden">
     <div class="upload-box" id="uploadArea">
       <div style="font-size: 48px; margin-bottom: 10px;">☁️</div>
@@ -451,7 +451,6 @@ function getHTML() {
       <button onclick="event.stopPropagation(); document.getElementById('fileInput').click()" style="margin-top: 15px;">Select Files</button>
       <div id="uploadProgress" style="margin-top: 15px; color: #666; font-size: 14px;"></div>
     </div>
-
     <div class="tag-cloud" id="tagCloud">
       <div class="tag-cloud-header">
         <h3>🏷️ Tag Cloud</h3>
@@ -459,7 +458,6 @@ function getHTML() {
       </div>
       <div class="tag-cloud-content" id="tagCloudContent"></div>
     </div>
-
     <div class="toolbar">
       <div class="toolbar-section">
         <input type="text" id="searchInput" class="search-box" placeholder="Search by name or tag...">
@@ -473,25 +471,21 @@ function getHTML() {
         </select>
         <button onclick="toggleSelectMode()">Bulk Select</button>
       </div>
-      
       <div class="bulk-actions" id="bulkActions">
         <button class="btn-danger" onclick="batchDelete()">Delete Selected</button>
         <button onclick="selectAll()">Select All</button>
         <button onclick="deselectAll()">Deselect</button>
         <span id="selectedCount" style="color: #666;">Selected: 0</span>
       </div>
-
       <div class="stats">
         <span>📊 Total: <strong id="totalImages">0</strong></span>
         <span>💾 Storage: <strong id="totalSize">0 MB</strong></span>
       </div>
     </div>
-
     <div class="gallery" id="gallery"></div>
     <div id="infiniteLoader" class="loader hidden">Loading...</div>
     <div id="endMessage" class="loader hidden">No more images.</div>
   </div>
-
   <div class="modal" id="editModal" onclick="if(event.target===this)closeEditModal()">
     <div class="modal-content">
       <h3>Edit Image Info</h3>
@@ -513,27 +507,20 @@ function getHTML() {
       </div>
     </div>
   </div>
-
-  <!-- Lightbox -->
   <div class="modal lightbox" id="lightbox" onclick="if(event.target===this)closeLightbox()">
     <button class="lightbox-nav prev" onclick="prevImage(event)">‹</button>
     <img id="lightboxImg" class="lightbox-img" src="" alt="">
     <button class="lightbox-nav next" onclick="nextImage(event)">›</button>
   </div>
-
   <footer class="footer">
     <p>&copy; <span id="currentYear"></span> Created by <a href="https://github.com/xdanielf/" target="_blank" rel="noopener noreferrer">xdanielf</a>.</p>
   </footer>
-
   <script>
     const PASSWORD_KEY = 'imgnaondo_password';
     const LOGIN_TIME_KEY = 'imgnaondo_login_time';
     const SESSION_DURATION = 24 * 60 * 60 * 1000;
-
-    // 无限滚动配置
     const PAGE_SIZE = 50;
-    const SCROLL_THRESHOLD = 300; // px
-
+    const SCROLL_THRESHOLD = 300;
     let password = '';
     let allImages = [];
     let allTags = [];
@@ -542,20 +529,14 @@ function getHTML() {
     let currentEditKey = '';
     let activeTag = null;
     let tagCloudExpanded = false;
-
-    // 分页状态
     let listCursor = null;
     let hasMore = true;
     let isLoading = false;
-
-    // Lightbox state
     let filteredImages = [];
     let lightboxIndex = -1;
-
     function checkExistingLogin() {
       const storedPassword = localStorage.getItem(PASSWORD_KEY);
       const loginTime = localStorage.getItem(LOGIN_TIME_KEY);
-
       if (storedPassword && loginTime && (Date.now() - parseInt(loginTime) < SESSION_DURATION)) {
         password = storedPassword;
         document.getElementById('loginSection').classList.add('hidden');
@@ -566,18 +547,15 @@ function getHTML() {
         logout(false);
       }
     }
-
     function logout(reload = true) {
       localStorage.removeItem(PASSWORD_KEY);
       localStorage.removeItem(LOGIN_TIME_KEY);
       password = '';
       if (reload) location.reload();
     }
-
     async function login() {
       const inputPassword = document.getElementById('passwordInput').value;
       if (!inputPassword) return showToast('Please enter the password');
-
       try {
         const res = await fetch('/api/stats', { headers: { 'Authorization': 'Bearer ' + inputPassword } });
         if (res.ok) {
@@ -595,11 +573,9 @@ function getHTML() {
         showToast('Login failed: ' + error.message);
       }
     }
-
     async function loadData() {
       await Promise.all([loadStats(), loadInitialGallery(), loadTags()]);
     }
-
     async function loadStats() {
       try {
         const res = await fetch('/api/stats', { headers: { 'Authorization': 'Bearer ' + password } });
@@ -608,20 +584,15 @@ function getHTML() {
         document.getElementById('totalSize').textContent = data.totalSizeMB + ' MB';
       } catch (error) { console.error('Failed to load stats:', error); }
     }
-
-    // —— 无限滚动：初始化 + 取下一页 ——
     async function loadInitialGallery() {
-      // reset
       allImages = [];
       listCursor = null;
       hasMore = true;
       isLoading = false;
       document.getElementById('gallery').innerHTML = '';
       document.getElementById('endMessage').classList.add('hidden');
-
-      await loadNextPage(); // 首次加载 50
+      await loadNextPage();
     }
-
     async function loadNextPage() {
       if (!hasMore || isLoading) return;
       isLoading = true;
@@ -633,20 +604,15 @@ function getHTML() {
           headers: { 'Authorization': 'Bearer ' + password }
         });
         const data = await res.json();
-
-        // 追加并去重
         const existed = new Set(allImages.map(i => i.key));
         for (const img of data.images) {
           if (!existed.has(img.key)) {
             allImages.push(img);
           }
         }
-
         listCursor = data.cursor;
         hasMore = data.truncated && !!data.cursor;
-
-        applyFilters(); // 统一排序/筛选并渲染
-
+        applyFilters();
         if (!hasMore) {
           document.getElementById('endMessage').classList.remove('hidden');
         }
@@ -658,12 +624,10 @@ function getHTML() {
         showBottomLoader(false);
       }
     }
-
     function showBottomLoader(show) {
       const el = document.getElementById('infiniteLoader');
       if (show) el.classList.remove('hidden'); else el.classList.add('hidden');
     }
-
     async function loadTags() {
       try {
         const res = await fetch('/api/tags', { headers: { 'Authorization': 'Bearer ' + password } });
@@ -672,7 +636,6 @@ function getHTML() {
         renderTagCloud();
       } catch (error) { console.error('Failed to load tags:', error); }
     }
-
     function renderTagCloud() {
       const container = document.getElementById('tagCloudContent');
       if (!allTags || allTags.length === 0) {
@@ -684,7 +647,6 @@ function getHTML() {
         return \`<div class="tag-item \${activeTag === tag ? 'active' : ''}" onclick="filterByTag('\${escapedTag}')">\${tag}<span class="tag-count">\${count}</span></div>\`;
       }).join('');
     }
-
     function toggleTagCloud() {
       tagCloudExpanded = !tagCloudExpanded;
       const content = document.getElementById('tagCloudContent');
@@ -692,24 +654,20 @@ function getHTML() {
       if (tagCloudExpanded) { content.classList.add('expanded'); btn.textContent = 'Collapse'; }
       else { content.classList.remove('expanded'); btn.textContent = 'Expand'; }
     }
-
     function filterByTag(tag) {
       if (activeTag === tag) { activeTag = null; document.getElementById('searchInput').value = ''; }
       else { activeTag = tag; document.getElementById('searchInput').value = tag; }
       renderTagCloud();
       applyFilters();
     }
-
     function applyFilters() {
       const searchTerm = document.getElementById('searchInput').value.toLowerCase();
       const sortBy = document.getElementById('sortSelect').value;
-
       let filtered = allImages.filter(img => {
         const name = (img.customName || img.originalName).toLowerCase();
         const tags = (img.tags || '').toLowerCase();
         return name.includes(searchTerm) || tags.includes(searchTerm);
       });
-
       filtered.sort((a, b) => {
         switch (sortBy) {
           case 'time-desc': return new Date(b.uploadTime) - new Date(a.uploadTime);
@@ -721,28 +679,22 @@ function getHTML() {
           default: return 0;
         }
       });
-
       filteredImages = filtered.slice();
       renderGallery(filtered);
     }
-
     function renderGallery(images) {
       const gallery = document.getElementById('gallery');
       if (images.length === 0) {
         gallery.innerHTML = '<div class="no-images">No images found.</div>';
         return;
       }
-
-      // 全量重绘（简单稳定；每页仅 50，性能 OK）
       gallery.innerHTML = '';
       images.forEach(img => {
         const card = document.createElement('div');
         card.className = 'image-card' + (selectedImages.has(img.key) ? ' selected' : '');
-        
         const displayName = img.customName || img.originalName;
         const safeAlt = displayName.replace(/'/g, "\\'").replace(/"/g, '&quot;');
         const tagsHtml = img.tags ? img.tags.split(',').map(tag => \`<span class="image-tag">\${tag.trim()}</span>\`).join('') : '';
-        
         card.innerHTML = \`
           \${selectMode ? \`<input type="checkbox" class="checkbox" \${selectedImages.has(img.key) ? 'checked' : ''} onchange="toggleSelect('\${img.key}')">\` : ''}
           <img src="\${img.url}" alt="\${displayName}" loading="lazy"
@@ -771,32 +723,24 @@ function getHTML() {
         gallery.appendChild(card);
       });
     }
-
     function handleFileSelect(files) { if (files.length > 0) uploadFiles(files); }
-
     async function uploadFiles(files) {
       const customName = document.getElementById('uploadCustomName').value.trim();
       const tags = document.getElementById('uploadTags').value.trim();
-      
       const uploadButton = document.querySelector('#uploadArea button');
       const uploadProgress = document.getElementById('uploadProgress');
       const uploadInputs = document.querySelectorAll('.upload-inputs input');
-
       let successCount = 0, failCount = 0;
-
       try {
         uploadButton.disabled = true; uploadButton.textContent = 'Uploading...';
         uploadInputs.forEach(input => input.disabled = true);
-
         for (let i = 0; i < files.length; i++) {
           const file = files[i];
           uploadProgress.textContent = \`Uploading \${i + 1} of \${files.length}: \${file.name}\`;
-
           const formData = new FormData();
           formData.append('file', file);
           if (customName) formData.append('customName', files.length > 1 ? \`\${customName}_\${i + 1}\` : customName);
           if (tags) formData.append('tags', tags);
-
           try {
             const res = await fetch('/api/upload', {
               method: 'POST', headers: { 'Authorization': 'Bearer ' + password }, body: formData
@@ -810,31 +754,23 @@ function getHTML() {
         uploadProgress.textContent = '';
         uploadInputs.forEach(input => input.disabled = false);
       }
-
       if (successCount > 0) showToast(\`✓ Successfully uploaded \${successCount} image(s)\`);
       if (failCount > 0) showToast(\`✗ \${failCount} image(s) failed to upload\`);
-
       document.getElementById('uploadCustomName').value = '';
       document.getElementById('uploadTags').value = '';
       document.getElementById('fileInput').value = '';
-      
-      // 重新初始化分页并加载第一页
       await loadInitialGallery();
       await loadStats();
       await loadTags();
     }
-
     async function deleteImage(key) {
       if (!confirm('Are you sure you want to delete this image?')) return;
-
       try {
         const res = await fetch(\`/api/delete/\${key}\`, {
           method: 'DELETE', headers: { 'Authorization': 'Bearer ' + password }
         });
-
         if (res.ok) {
           showToast('Image deleted successfully');
-          // 从本地列表移除并局部刷新
           allImages = allImages.filter(i => i.key !== key);
           selectedImages.delete(key);
           document.getElementById('selectedCount').textContent = \`Selected: \${selectedImages.size}\`;
@@ -846,7 +782,6 @@ function getHTML() {
         showToast('Error deleting image: ' + error.message);
       }
     }
-
     function toggleSelectMode() {
       selectMode = !selectMode;
       if (!selectMode) {
@@ -858,26 +793,22 @@ function getHTML() {
       }
       applyFilters();
     }
-
     function toggleSelect(key) {
       if (selectedImages.has(key)) selectedImages.delete(key);
       else selectedImages.add(key);
       document.getElementById('selectedCount').textContent = \`Selected: \${selectedImages.size}\`;
       applyFilters();
     }
-
     function selectAll() {
       allImages.forEach(img => selectedImages.add(img.key));
       document.getElementById('selectedCount').textContent = \`Selected: \${selectedImages.size}\`;
       applyFilters();
     }
-
     function deselectAll() {
       selectedImages.clear();
       document.getElementById('selectedCount').textContent = 'Selected: 0';
       applyFilters();
     }
-
     function openEdit(key) {
       const img = allImages.find(i => i.key === key);
       if (!img) return;
@@ -887,23 +818,18 @@ function getHTML() {
       document.getElementById('editOriginalName').value = img.originalName;
       document.getElementById('editModal').classList.add('show');
     }
-
     function closeEditModal() { document.getElementById('editModal').classList.remove('show'); }
-
     async function saveEdit() {
       const customName = document.getElementById('editCustomName').value.trim();
       const tags = document.getElementById('editTags').value.trim();
-
       try {
         const res = await fetch('/api/rename', {
           method: 'POST',
           headers: { 'Authorization': 'Bearer ' + password, 'Content-Type': 'application/json' },
           body: JSON.stringify({ filename: currentEditKey, customName, tags })
         });
-
         if (res.ok) {
           showToast('Saved successfully');
-          // 更新本地数据
           const idx = allImages.findIndex(i => i.key === currentEditKey);
           if (idx >= 0) { allImages[idx].customName = customName; allImages[idx].tags = tags; }
           closeEditModal();
@@ -916,8 +842,6 @@ function getHTML() {
         showToast('Save failed: ' + error.message);
       }
     }
-
-    // —— Clipboard：带回退 ——
     async function attemptCopy(text) {
       if (navigator.clipboard && window.isSecureContext) {
         await navigator.clipboard.writeText(text);
@@ -936,7 +860,6 @@ function getHTML() {
       document.body.removeChild(ta);
       if (!ok) throw new Error('execCommand copy failed');
     }
-
     function buildCopyText(url, alt, fmt) {
       switch (fmt) {
         case 'url': return url;
@@ -946,33 +869,27 @@ function getHTML() {
         default: return url;
       }
     }
-
     async function copyInFormat(url, alt, fmt) {
       const text = buildCopyText(url, alt, fmt);
       try { await attemptCopy(text); showToast('✓ Copied'); }
       catch (e) { console.error(e); showToast('✗ Copy failed'); }
       finally { document.querySelectorAll('.copy-dropdown.open').forEach(el => el.classList.remove('open')); }
     }
-
     function toggleCopyMenu(e) {
       e.stopPropagation();
       const wrap = e.target.closest('.copy-dropdown');
       document.querySelectorAll('.copy-dropdown.open').forEach(el => { if (el !== wrap) el.classList.remove('open'); });
       wrap.classList.toggle('open');
     }
-
-    // 旧的单格式复制（保留）
     async function copyUrl(url) {
       try { await attemptCopy(url); showToast('✓ Link copied to clipboard'); }
       catch { showToast('✗ Failed to copy link'); }
     }
-
     function formatSize(bytes) {
       if (bytes < 1024) return bytes + ' B';
       if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(1) + ' KB';
       return (bytes / (1024 * 1024)).toFixed(1) + ' MB';
     }
-
     function showToast(message) {
       const toast = document.createElement('div');
       toast.className = 'toast';
@@ -980,8 +897,6 @@ function getHTML() {
       document.body.appendChild(toast);
       setTimeout(() => toast.remove(), 2500);
     }
-
-    // Lightbox
     function openLightbox(key) {
       lightboxIndex = filteredImages.findIndex(i => i.key === key);
       if (lightboxIndex < 0) return;
@@ -998,8 +913,6 @@ function getHTML() {
     function closeLightbox() { document.getElementById('lightbox').classList.remove('show'); }
     function prevImage(e) { e && e.stopPropagation(); if (lightboxIndex > 0) { lightboxIndex--; updateLightbox(); } }
     function nextImage(e) { e && e.stopPropagation(); if (lightboxIndex < filteredImages.length - 1) { lightboxIndex++; updateLightbox(); } }
-
-    // —— 批量删除（Delete Selected） ——
     async function batchDelete() {
       if (!selectMode) {
         showToast('Please enable Bulk Select first');
@@ -1011,14 +924,11 @@ function getHTML() {
         return;
       }
       if (!confirm(\`Are you sure you want to delete \${keys.length} image(s)?\`)) return;
-
-      // 禁用按钮防重复
       const bulkWrap = document.getElementById('bulkActions');
       const delBtn = bulkWrap.querySelector('.btn-danger');
       const oldText = delBtn.textContent;
       delBtn.disabled = true;
       delBtn.textContent = 'Deleting...';
-
       try {
         const res = await fetch('/api/batch-delete', {
           method: 'POST',
@@ -1028,20 +938,13 @@ function getHTML() {
           },
           body: JSON.stringify({ filenames: keys })
         });
-
         const data = await res.json().catch(() => ({}));
         if (!res.ok) throw new Error(data.error || 'Request failed');
-
-        // 本地移除已删图片
         const delSet = new Set(keys);
         allImages = allImages.filter(img => !delSet.has(img.key));
         selectedImages.clear();
         document.getElementById('selectedCount').textContent = 'Selected: 0';
         applyFilters();
-
-        // 可选：删除后退出批量模式
-        // toggleSelectMode();
-
         showToast(\`Successfully deleted \${keys.length} image(s)\`);
       } catch (e) {
         console.error(e);
@@ -1051,17 +954,12 @@ function getHTML() {
         delBtn.textContent = oldText;
       }
     }
-
-    // 点击空白收起复制菜单
     document.addEventListener('click', () => {
       document.querySelectorAll('.copy-dropdown.open').forEach(el => el.classList.remove('open'));
     });
-
-    // 支持粘贴上传
     window.addEventListener('paste', async (e) => {
       const items = e.clipboardData && e.clipboardData.items;
       if (!items || !items.length) return;
-
       const files = [];
       for (const it of items) {
         if (it.type && it.type.startsWith('image/')) {
@@ -1071,24 +969,19 @@ function getHTML() {
         }
       }
       if (!files.length) return;
-
       if (!password) { showToast('Please login first'); return; }
       showToast(\`Uploading \${files.length} pasted image(s)...\`);
       await uploadFiles(files);
     });
-
-    // 滚动监听：接近页面底部加载下一页
     window.addEventListener('scroll', () => {
       if (!hasMore || isLoading) return;
       const scrollBottom = document.documentElement.scrollHeight - (window.scrollY + window.innerHeight);
       if (scrollBottom < SCROLL_THRESHOLD) loadNextPage();
     });
-
     document.addEventListener('DOMContentLoaded', () => {
       checkExistingLogin();
       document.getElementById('currentYear').textContent = new Date().getFullYear();
     });
-
     const uploadArea = document.getElementById('uploadArea');
     uploadArea.addEventListener('dragover', (e) => { e.preventDefault(); uploadArea.classList.add('dragging'); });
     uploadArea.addEventListener('dragleave', (e) => { if (e.target === uploadArea) uploadArea.classList.remove('dragging'); });
@@ -1097,12 +990,9 @@ function getHTML() {
       const files = Array.from(e.dataTransfer.files).filter(f => f.type.startsWith('image/'));
       if (files.length > 0) uploadFiles(files);
     });
-
     document.getElementById('searchInput').addEventListener('input', () => {
       activeTag = null; renderTagCloud(); applyFilters();
     });
-
-    // 键盘：Esc 关闭弹窗；左右切换 Lightbox
     document.addEventListener('keydown', (e) => {
       const editOpen = document.getElementById('editModal').classList.contains('show');
       const lightboxOpen = document.getElementById('lightbox').classList.contains('show');
