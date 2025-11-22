@@ -327,7 +327,8 @@ function getHTML() {
     body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: #f5f5f5; color: #333; }
     .header { background: #2c3e50; color: white; padding: 15px 20px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
     .header-content { display: flex; justify-content: space-between; align-items: center; max-width: 1400px; margin: 0 auto; }
-    .header h1 { font-size: 24px; font-weight: 600; }
+    .header h1 { font-size: 24px; font-weight: 600; display: flex; align-items: center; gap: 10px;}
+    .header-controls { display: flex; align-items: center; gap: 15px; }
     .container { max-width: 1400px; margin: 0 auto; padding: 20px; }
     .login-box { max-width: 400px; margin: 100px auto; background: white; padding: 30px; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); }
     .login-box h2 { margin-bottom: 20px; text-align: center; }
@@ -393,7 +394,6 @@ function getHTML() {
     .lightbox-nav { position: absolute; top: 50%; transform: translateY(-50%); border: none; background: rgba(0,0,0,.5); color: #fff; font-size: 28px; padding: 8px 12px; border-radius: 8px; cursor: pointer; z-index: 1001; }
     .lightbox-nav.prev { left: 20px; }
     .lightbox-nav.next { right: 20px; }
-
     .copy-dropdown { position: relative; }
     .copy-dropdown-menu {
       position: absolute;
@@ -431,86 +431,103 @@ function getHTML() {
       background: #f0f0f0;
     }
     .loader { text-align: center; padding: 16px; color: #666; }
+    .lang-select {
+        background: rgba(255,255,255,0.1);
+        color: white;
+        border: 1px solid rgba(255,255,255,0.2);
+        font-size: 13px;
+        padding: 5px 10px;
+        border-radius: 4px;
+        cursor: pointer;
+    }
+    .lang-select option {
+        background: #2c3e50;
+        color: white;
+    }
   </style>
 </head>
 <body>
   <div class="header">
     <div class="header-content">
-      <h1>🖼️ ImgNaondo Image Hosting</h1>
-      <button id="logoutButton" class="hidden btn-danger" onclick="logout()" style="padding: 8px 15px;">Logout</button>
+      <h1>🖼️ <span data-i18n="title">ImgNaondo</span></h1>
+      <div class="header-controls">
+        <select id="langSelect" class="lang-select" onchange="changeLanguage(this.value)">
+            <option value="en">English</option>
+            <option value="zh">简体中文</option>
+            <option value="fr">Français</option>
+            <option value="de">Deutsch</option>
+            <option value="ru">Русский</option>
+            <option value="nl">Nederlands</option>
+        </select>
+        <button id="logoutButton" class="hidden btn-danger" onclick="logout()" style="padding: 8px 15px;" data-i18n="logout">Logout</button>
+      </div>
     </div>
   </div>
   <div id="loginSection" class="login-box">
-    <h2>Login</h2>
-    <input type="password" id="passwordInput" placeholder="Enter access password" onkeypress="if(event.key==='Enter')login()">
-    <button style="width: 100%;" onclick="login()">Login</button>
+    <h2 data-i18n="login_title">Login</h2>
+    <input type="password" id="passwordInput" data-placeholder="ph_password" placeholder="Enter access password" onkeypress="if(event.key==='Enter')login()">
+    <button style="width: 100%;" onclick="login()" data-i18n="login_btn">Login</button>
   </div>
   <div id="mainSection" class="container hidden">
     <div class="upload-box" id="uploadArea">
       <div style="font-size: 48px; margin-bottom: 10px;">☁️</div>
-      <h3>Click or Drag & Drop Images Here</h3>
-      <p style="color: #666; margin-top: 8px;">Supports JPG, PNG, GIF, WebP, SVG, BMP</p>
+      <h3 data-i18n="upload_drag">Click or Drag & Drop Images Here</h3>
+      <p style="color: #666; margin-top: 8px;" data-i18n="upload_support">Supports JPG, PNG, GIF, WebP, SVG, BMP</p>
       <input type="file" id="fileInput" accept="image/*" multiple style="display: none;" onchange="handleFileSelect(this.files)">
       <div class="upload-inputs">
-        <input type="text" id="uploadCustomName" placeholder="Custom Name (optional)" onclick="event.stopPropagation()">
-        <input type="text" id="uploadTags" placeholder="Tags (comma-separated)" onclick="event.stopPropagation()">
+        <input type="text" id="uploadCustomName" data-placeholder="ph_custom_name" placeholder="Custom Name (optional)" onclick="event.stopPropagation()">
+        <input type="text" id="uploadTags" data-placeholder="ph_tags" placeholder="Tags (comma-separated)" onclick="event.stopPropagation()">
       </div>
-      <button onclick="event.stopPropagation(); document.getElementById('fileInput').click()" style="margin-top: 15px;">Select Files</button>
+      <button onclick="event.stopPropagation(); document.getElementById('fileInput').click()" style="margin-top: 15px;" data-i18n="select_files">Select Files</button>
       <div id="uploadProgress" style="margin-top: 15px; color: #666; font-size: 14px;"></div>
     </div>
     <div class="tag-cloud" id="tagCloud">
       <div class="tag-cloud-header">
-        <h3>🏷️ Tag Cloud</h3>
-        <button class="tag-cloud-toggle" onclick="toggleTagCloud()">Expand</button>
+        <h3 data-i18n="tag_cloud">🏷️ Tag Cloud</h3>
+        <button class="tag-cloud-toggle" onclick="toggleTagCloud()" data-i18n="expand">Expand</button>
       </div>
       <div class="tag-cloud-content" id="tagCloudContent"></div>
     </div>
     <div class="toolbar">
       <div class="toolbar-section">
-        <input type="text" id="searchInput" class="search-box" placeholder="Search by name or tag...">
+        <input type="text" id="searchInput" class="search-box" data-placeholder="ph_search" placeholder="Search by name or tag...">
         <select id="sortSelect" onchange="applyFilters()">
-          <option value="time-desc">Newest First</option>
-          <option value="time-asc">Oldest First</option>
-          <option value="size-desc">Largest First</option>
-          <option value="size-asc">Smallest First</option>
-          <option value="name-asc">Name A-Z</option>
-          <option value="name-desc">Name Z-A</option>
         </select>
-        <button onclick="toggleSelectMode()">Bulk Select</button>
+        <button onclick="toggleSelectMode()" data-i18n="bulk_select">Bulk Select</button>
       </div>
       <div class="bulk-actions" id="bulkActions">
-        <button class="btn-danger" onclick="batchDelete()">Delete Selected</button>
-        <button onclick="selectAll()">Select All</button>
-        <button onclick="deselectAll()">Deselect</button>
+        <button class="btn-danger" onclick="batchDelete()" data-i18n="delete_selected">Delete Selected</button>
+        <button onclick="selectAll()" data-i18n="select_all">Select All</button>
+        <button onclick="deselectAll()" data-i18n="deselect">Deselect</button>
         <span id="selectedCount" style="color: #666;">Selected: 0</span>
       </div>
       <div class="stats">
-        <span>📊 Total: <strong id="totalImages">0</strong></span>
-        <span>💾 Storage: <strong id="totalSize">0 MB</strong></span>
+        <span><span data-i18n="stat_total">📊 Total:</span> <strong id="totalImages">0</strong></span>
+        <span><span data-i18n="stat_storage">💾 Storage:</span> <strong id="totalSize">0 MB</strong></span>
       </div>
     </div>
     <div class="gallery" id="gallery"></div>
-    <div id="infiniteLoader" class="loader hidden">Loading...</div>
-    <div id="endMessage" class="loader hidden">No more images.</div>
+    <div id="infiniteLoader" class="loader hidden" data-i18n="loading">Loading...</div>
+    <div id="endMessage" class="loader hidden" data-i18n="no_more">No more images.</div>
   </div>
   <div class="modal" id="editModal" onclick="if(event.target===this)closeEditModal()">
     <div class="modal-content">
-      <h3>Edit Image Info</h3>
+      <h3 data-i18n="edit_title">Edit Image Info</h3>
       <div class="form-group">
-        <label>Custom Name</label>
+        <label data-i18n="lbl_custom_name">Custom Name</label>
         <input type="text" id="editCustomName">
       </div>
       <div class="form-group">
-        <label>Tags (comma-separated)</label>
+        <label data-i18n="lbl_tags">Tags (comma-separated)</label>
         <input type="text" id="editTags" placeholder="landscape, travel, 2024">
       </div>
       <div class="form-group">
-        <label>Original Filename</label>
+        <label data-i18n="lbl_original">Original Filename</label>
         <input type="text" id="editOriginalName" disabled>
       </div>
       <div style="display: flex; gap: 10px; margin-top: 20px;">
-        <button class="btn-success" onclick="saveEdit()">Save</button>
-        <button onclick="closeEditModal()">Cancel</button>
+        <button class="btn-success" onclick="saveEdit()" data-i18n="save">Save</button>
+        <button onclick="closeEditModal()" data-i18n="cancel">Cancel</button>
       </div>
     </div>
   </div>
@@ -525,9 +542,361 @@ function getHTML() {
   <script>
     const PASSWORD_KEY = 'imgnaondo_password';
     const LOGIN_TIME_KEY = 'imgnaondo_login_time';
+    const LANG_KEY = 'imgnaondo_lang';
     const SESSION_DURATION = 24 * 60 * 60 * 1000;
     const PAGE_SIZE = 50;
     const SCROLL_THRESHOLD = 300;
+    
+    const i18n = {
+        en: {
+            title: "ImgNaondo",
+            logout: "Logout",
+            login_title: "Login",
+            ph_password: "Enter access password",
+            login_btn: "Login",
+            upload_drag: "Click or Drag & Drop Images Here",
+            upload_support: "Supports JPG, PNG, GIF, WebP, SVG, BMP",
+            ph_custom_name: "Custom Name (optional)",
+            ph_tags: "Tags (comma-separated)",
+            select_files: "Select Files",
+            tag_cloud: "🏷️ Tag Cloud",
+            expand: "Expand",
+            collapse: "Collapse",
+            ph_search: "Search by name or tag...",
+            bulk_select: "Bulk Select",
+            delete_selected: "Delete Selected",
+            select_all: "Select All",
+            deselect: "Deselect",
+            stat_total: "📊 Total:",
+            stat_storage: "💾 Storage:",
+            loading: "Loading...",
+            no_more: "No more images.",
+            no_images_found: "No images found.",
+            edit_title: "Edit Image Info",
+            lbl_custom_name: "Custom Name",
+            lbl_tags: "Tags (comma-separated)",
+            lbl_original: "Original Filename",
+            save: "Save",
+            cancel: "Cancel",
+            copy: "Copy",
+            edit: "Edit",
+            del: "Del",
+            sort_newest: "Newest First",
+            sort_oldest: "Oldest First",
+            sort_largest: "Largest First",
+            sort_smallest: "Smallest First",
+            sort_az: "Name A-Z",
+            sort_za: "Name Z-A",
+            toast_enter_pass: "Please enter the password",
+            toast_incorrect: "Incorrect password",
+            toast_login_fail: "Login failed: ",
+            toast_error_load: "Error loading image library",
+            toast_uploading: "Uploading {0} of {1}...",
+            toast_uploaded: "Uploaded {0} images",
+            confirm_del: "Delete this image?",
+            confirm_batch: "Delete {0} images?",
+            toast_deleted: "Deleted",
+            toast_batch_success: "Batch delete successful",
+            toast_batch_fail: "Batch delete failed",
+            toast_saved: "Saved",
+            toast_no_select: "No images selected",
+            toast_copy_ok: "✓ Copied",
+            toast_copy_fail: "✗ Copy failed",
+            toast_login_first: "Please login first",
+            msg_selected: "Selected: {0}",
+            tag_no_tags: "No tags yet"
+        },
+        zh: {
+            title: "ImgNaondo 图床",
+            logout: "退出登录",
+            login_title: "登录",
+            ph_password: "输入访问密码",
+            login_btn: "登录",
+            upload_drag: "点击或拖拽图片至此",
+            upload_support: "支持 JPG, PNG, GIF, WebP, SVG, BMP",
+            ph_custom_name: "自定义名称（可选）",
+            ph_tags: "标签（逗号分隔）",
+            select_files: "选择文件",
+            tag_cloud: "🏷️ 标签云",
+            expand: "展开",
+            collapse: "收起",
+            ph_search: "按名称或标签搜索...",
+            bulk_select: "批量选择",
+            delete_selected: "删除选中",
+            select_all: "全选",
+            deselect: "取消选择",
+            stat_total: "📊 总数:",
+            stat_storage: "💾 占用:",
+            loading: "加载中...",
+            no_more: "没有更多图片了",
+            no_images_found: "未找到图片",
+            edit_title: "编辑图片信息",
+            lbl_custom_name: "自定义名称",
+            lbl_tags: "标签（逗号分隔）",
+            lbl_original: "原始文件名",
+            save: "保存",
+            cancel: "取消",
+            copy: "复制",
+            edit: "编辑",
+            del: "删除",
+            sort_newest: "最新上传",
+            sort_oldest: "最早上传",
+            sort_largest: "体积最大",
+            sort_smallest: "体积最小",
+            sort_az: "名称 A-Z",
+            sort_za: "名称 Z-A",
+            toast_enter_pass: "请输入密码",
+            toast_incorrect: "密码错误",
+            toast_login_fail: "登录失败: ",
+            toast_error_load: "加载图库失败",
+            toast_uploading: "正在上传 {0} / {1}...",
+            toast_uploaded: "已上传 {0} 张图片",
+            confirm_del: "确定删除这张图片吗？",
+            confirm_batch: "确定删除 {0} 张图片吗？",
+            toast_deleted: "已删除",
+            toast_batch_success: "批量删除成功",
+            toast_batch_fail: "批量删除失败",
+            toast_saved: "已保存",
+            toast_no_select: "未选择图片",
+            toast_copy_ok: "✓ 已复制",
+            toast_copy_fail: "✗ 复制失败",
+            toast_login_first: "请先登录",
+            msg_selected: "已选: {0}",
+            tag_no_tags: "暂无标签"
+        },
+        fr: {
+            title: "Hébergement ImgNaondo",
+            logout: "Déconnexion",
+            login_title: "Connexion",
+            ph_password: "Entrez le mot de passe",
+            login_btn: "Connexion",
+            upload_drag: "Cliquez ou glissez-déposez ici",
+            upload_support: "Supporte JPG, PNG, GIF, WebP, SVG, BMP",
+            ph_custom_name: "Nom personnalisé (optionnel)",
+            ph_tags: "Tags (séparés par des virgules)",
+            select_files: "Choisir des fichiers",
+            tag_cloud: "🏷️ Nuage de tags",
+            expand: "Développer",
+            collapse: "Réduire",
+            ph_search: "Rechercher par nom ou tag...",
+            bulk_select: "Sélection multiple",
+            delete_selected: "Supprimer la sélection",
+            select_all: "Tout sélectionner",
+            deselect: "Désélectionner",
+            stat_total: "📊 Total:",
+            stat_storage: "💾 Stockage:",
+            loading: "Chargement...",
+            no_more: "Plus d'images.",
+            no_images_found: "Aucune image trouvée.",
+            edit_title: "Modifier les infos",
+            lbl_custom_name: "Nom personnalisé",
+            lbl_tags: "Tags",
+            lbl_original: "Nom original",
+            save: "Sauvegarder",
+            cancel: "Annuler",
+            copy: "Copier",
+            edit: "Éditer",
+            del: "Suppr",
+            sort_newest: "Plus récents",
+            sort_oldest: "Plus anciens",
+            sort_largest: "Plus grands",
+            sort_smallest: "Plus petits",
+            sort_az: "Nom A-Z",
+            sort_za: "Nom Z-A",
+            toast_enter_pass: "Veuillez entrer le mot de passe",
+            toast_incorrect: "Mot de passe incorrect",
+            toast_login_fail: "Échec de connexion: ",
+            toast_error_load: "Erreur de chargement",
+            toast_uploading: "Téléversement {0} sur {1}...",
+            toast_uploaded: "{0} images téléversées",
+            confirm_del: "Supprimer cette image ?",
+            confirm_batch: "Supprimer {0} images ?",
+            toast_deleted: "Supprimé",
+            toast_batch_success: "Suppression multiple réussie",
+            toast_batch_fail: "Échec suppression multiple",
+            toast_saved: "Sauvegardé",
+            toast_no_select: "Aucune image sélectionnée",
+            toast_copy_ok: "✓ Copié",
+            toast_copy_fail: "✗ Échec copie",
+            toast_login_first: "Veuillez vous connecter",
+            msg_selected: "Sélectionné: {0}",
+            tag_no_tags: "Pas de tags"
+        },
+        de: {
+            title: "ImgNaondo Hosting",
+            logout: "Abmelden",
+            login_title: "Anmelden",
+            ph_password: "Passwort eingeben",
+            login_btn: "Anmelden",
+            upload_drag: "Klicken oder Bilder hierher ziehen",
+            upload_support: "Unterstützt JPG, PNG, GIF, WebP, SVG, BMP",
+            ph_custom_name: "Benutzerdefinierter Name (optional)",
+            ph_tags: "Tags (kommagetrennt)",
+            select_files: "Dateien auswählen",
+            tag_cloud: "🏷️ Schlagwortwolke",
+            expand: "Ausklappen",
+            collapse: "Einklappen",
+            ph_search: "Suchen nach Name oder Tag...",
+            bulk_select: "Mehrfachauswahl",
+            delete_selected: "Ausgewählte löschen",
+            select_all: "Alle auswählen",
+            deselect: "Abwählen",
+            stat_total: "📊 Gesamt:",
+            stat_storage: "💾 Speicher:",
+            loading: "Laden...",
+            no_more: "Keine weiteren Bilder.",
+            no_images_found: "Keine Bilder gefunden.",
+            edit_title: "Bildinfos bearbeiten",
+            lbl_custom_name: "Name",
+            lbl_tags: "Tags",
+            lbl_original: "Originalname",
+            save: "Speichern",
+            cancel: "Abbrechen",
+            copy: "Kopieren",
+            edit: "Bearbeiten",
+            del: "Löschen",
+            sort_newest: "Neueste zuerst",
+            sort_oldest: "Älteste zuerst",
+            sort_largest: "Größte zuerst",
+            sort_smallest: "Kleinste zuerst",
+            sort_az: "Name A-Z",
+            sort_za: "Name Z-A",
+            toast_enter_pass: "Bitte Passwort eingeben",
+            toast_incorrect: "Falsches Passwort",
+            toast_login_fail: "Anmeldung fehlgeschlagen: ",
+            toast_error_load: "Fehler beim Laden",
+            toast_uploading: "Lade hoch {0} von {1}...",
+            toast_uploaded: "{0} Bilder hochgeladen",
+            confirm_del: "Dieses Bild löschen?",
+            confirm_batch: "{0} Bilder löschen?",
+            toast_deleted: "Gelöscht",
+            toast_batch_success: "Erfolgreich gelöscht",
+            toast_batch_fail: "Löschen fehlgeschlagen",
+            toast_saved: "Gespeichert",
+            toast_no_select: "Keine Bilder ausgewählt",
+            toast_copy_ok: "✓ Kopiert",
+            toast_copy_fail: "✗ Kopieren fehlgeschlagen",
+            toast_login_first: "Bitte zuerst anmelden",
+            msg_selected: "Ausgewählt: {0}",
+            tag_no_tags: "Keine Tags"
+        },
+        ru: {
+            title: "ImgNaondo Хостинг",
+            logout: "Выйти",
+            login_title: "Вход",
+            ph_password: "Введите пароль",
+            login_btn: "Войти",
+            upload_drag: "Нажмите или перетащите изображения сюда",
+            upload_support: "Поддержка JPG, PNG, GIF, WebP, SVG, BMP",
+            ph_custom_name: "Свое имя (необязательно)",
+            ph_tags: "Теги (через запятую)",
+            select_files: "Выбрать файлы",
+            tag_cloud: "🏷️ Облако тегов",
+            expand: "Развернуть",
+            collapse: "Свернуть",
+            ph_search: "Поиск по имени или тегу...",
+            bulk_select: "Выбор",
+            delete_selected: "Удалить выбранное",
+            select_all: "Выбрать все",
+            deselect: "Снять выделение",
+            stat_total: "📊 Всего:",
+            stat_storage: "💾 Объем:",
+            loading: "Загрузка...",
+            no_more: "Больше изображений нет.",
+            no_images_found: "Изображения не найдены.",
+            edit_title: "Редактировать инфо",
+            lbl_custom_name: "Имя",
+            lbl_tags: "Теги",
+            lbl_original: "Оригинальное имя",
+            save: "Сохранить",
+            cancel: "Отмена",
+            copy: "Копировать",
+            edit: "Ред.",
+            del: "Удал.",
+            sort_newest: "Сначала новые",
+            sort_oldest: "Сначала старые",
+            sort_largest: "Сначала большие",
+            sort_smallest: "Сначала маленькие",
+            sort_az: "Имя А-Я",
+            sort_za: "Имя Я-А",
+            toast_enter_pass: "Пожалуйста, введите пароль",
+            toast_incorrect: "Неверный пароль",
+            toast_login_fail: "Ошибка входа: ",
+            toast_error_load: "Ошибка загрузки библиотеки",
+            toast_uploading: "Загрузка {0} из {1}...",
+            toast_uploaded: "Загружено {0} изображений",
+            confirm_del: "Удалить это изображение?",
+            confirm_batch: "Удалить {0} изображений?",
+            toast_deleted: "Удалено",
+            toast_batch_success: "Успешно удалено",
+            toast_batch_fail: "Ошибка удаления",
+            toast_saved: "Сохранено",
+            toast_no_select: "Изображения не выбраны",
+            toast_copy_ok: "✓ Скопировано",
+            toast_copy_fail: "✗ Ошибка копирования",
+            toast_login_first: "Сначала войдите",
+            msg_selected: "Выбрано: {0}",
+            tag_no_tags: "Нет тегов"
+        },
+        nl: {
+            title: "ImgNaondo Hosting",
+            logout: "Uitloggen",
+            login_title: "Inloggen",
+            ph_password: "Voer wachtwoord in",
+            login_btn: "Inloggen",
+            upload_drag: "Klik of sleep afbeeldingen hierheen",
+            upload_support: "Ondersteunt JPG, PNG, GIF, WebP, SVG, BMP",
+            ph_custom_name: "Aangepaste naam (optioneel)",
+            ph_tags: "Tags (komma gescheiden)",
+            select_files: "Bestanden selecteren",
+            tag_cloud: "🏷️ Tagwolk",
+            expand: "Uitklappen",
+            collapse: "Inklappen",
+            ph_search: "Zoeken op naam of tag...",
+            bulk_select: "Meervoudige selectie",
+            delete_selected: "Selectie verwijderen",
+            select_all: "Alles selecteren",
+            deselect: "Deselecteren",
+            stat_total: "📊 Totaal:",
+            stat_storage: "💾 Opslag:",
+            loading: "Laden...",
+            no_more: "Geen afbeeldingen meer.",
+            no_images_found: "Geen afbeeldingen gevonden.",
+            edit_title: "Afbeeldingsinfo bewerken",
+            lbl_custom_name: "Naam",
+            lbl_tags: "Tags",
+            lbl_original: "Originele bestandsnaam",
+            save: "Opslaan",
+            cancel: "Annuleren",
+            copy: "Kopiëren",
+            edit: "Bewerk",
+            del: "Verw",
+            sort_newest: "Nieuwste eerst",
+            sort_oldest: "Oudste eerst",
+            sort_largest: "Grootste eerst",
+            sort_smallest: "Kleinste eerst",
+            sort_az: "Naam A-Z",
+            sort_za: "Naam Z-A",
+            toast_enter_pass: "Voer wachtwoord in aub",
+            toast_incorrect: "Onjuist wachtwoord",
+            toast_login_fail: "Inloggen mislukt: ",
+            toast_error_load: "Fout bij laden",
+            toast_uploading: "Uploaden {0} van {1}...",
+            toast_uploaded: "{0} afbeeldingen geüpload",
+            confirm_del: "Deze afbeelding verwijderen?",
+            confirm_batch: "{0} afbeeldingen verwijderen?",
+            toast_deleted: "Verwijderd",
+            toast_batch_success: "Succesvol verwijderd",
+            toast_batch_fail: "Verwijderen mislukt",
+            toast_saved: "Opgeslagen",
+            toast_no_select: "Geen afbeeldingen geselecteerd",
+            toast_copy_ok: "✓ Gekopieerd",
+            toast_copy_fail: "✗ Kopiëren mislukt",
+            toast_login_first: "Log eerst in aub",
+            msg_selected: "Geselecteerd: {0}",
+            tag_no_tags: "Nog geen tags"
+        }
+    };
     
     let password = '';
     let fullLibrary = [];
@@ -541,6 +910,91 @@ function getHTML() {
     let tagCloudExpanded = false;
     let isLoadingLibrary = false;
     let lightboxIndex = -1;
+    let currentLang = 'en';
+    let allTags = [];
+
+    function initLanguage() {
+        const savedLang = localStorage.getItem(LANG_KEY);
+        if (savedLang && i18n[savedLang]) {
+            currentLang = savedLang;
+        } else {
+            const browserLang = navigator.language.split('-')[0];
+            if (i18n[browserLang]) {
+                currentLang = browserLang;
+            } else {
+                currentLang = 'en';
+            }
+        }
+        document.getElementById('langSelect').value = currentLang;
+        updateUIText();
+    }
+
+    function changeLanguage(lang) {
+        if (!i18n[lang]) return;
+        currentLang = lang;
+        localStorage.setItem(LANG_KEY, lang);
+        updateUIText();
+        renderSortOptions();
+        
+        if (fullLibrary.length > 0) {
+            renderTagCloud();
+            if (document.getElementById('bulkActions').classList.contains('show')) {
+                updateSelectionCount();
+            }
+            const gallery = document.getElementById('gallery');
+            gallery.innerHTML = '';
+            renderedCount = 0;
+            renderNextBatch();
+        } else {
+            const gallery = document.getElementById('gallery');
+            if(gallery.innerHTML.includes('no-images')) {
+                gallery.innerHTML = \`<div class="no-images">\${t('no_images_found')}</div>\`;
+            }
+        }
+    }
+
+    function t(key, ...args) {
+        let str = (i18n[currentLang] && i18n[currentLang][key]) || i18n['en'][key] || key;
+        args.forEach((arg, i) => {
+            str = str.replace(\`{\${i}}\`, arg);
+        });
+        return str;
+    }
+
+    function updateUIText() {
+        document.querySelectorAll('[data-i18n]').forEach(el => {
+            el.textContent = t(el.getAttribute('data-i18n'));
+        });
+        document.querySelectorAll('[data-placeholder]').forEach(el => {
+            el.placeholder = t(el.getAttribute('data-placeholder'));
+        });
+        
+        const tagBtn = document.querySelector('.tag-cloud-toggle');
+        if (tagBtn) {
+            tagBtn.textContent = tagCloudExpanded ? t('collapse') : t('expand');
+        }
+    }
+    
+    function renderSortOptions() {
+        const select = document.getElementById('sortSelect');
+        const currentVal = select.value || 'time-desc';
+        select.innerHTML = '';
+        const opts = [
+            {v: 'time-desc', k: 'sort_newest'},
+            {v: 'time-asc', k: 'sort_oldest'},
+            {v: 'size-desc', k: 'sort_largest'},
+            {v: 'size-asc', k: 'sort_smallest'},
+            {v: 'name-asc', k: 'sort_az'},
+            {v: 'name-desc', k: 'sort_za'}
+        ];
+        opts.forEach(o => {
+            const opt = document.createElement('option');
+            opt.value = o.v;
+            opt.textContent = t(o.k);
+            select.appendChild(opt);
+        });
+        select.value = currentVal;
+    }
 
     function checkExistingLogin() {
       const storedPassword = localStorage.getItem(PASSWORD_KEY);
@@ -565,7 +1019,7 @@ function getHTML() {
 
     async function login() {
       const inputPassword = document.getElementById('passwordInput').value;
-      if (!inputPassword) return showToast('Please enter the password');
+      if (!inputPassword) return showToast(t('toast_enter_pass'));
       try {
         const res = await fetch('/api/stats', { headers: { 'Authorization': 'Bearer ' + inputPassword } });
         if (res.ok) {
@@ -577,10 +1031,10 @@ function getHTML() {
           document.getElementById('logoutButton').classList.remove('hidden');
           loadData();
         } else {
-          showToast('Incorrect password');
+          showToast(t('toast_incorrect'));
         }
       } catch (error) {
-        showToast('Login failed: ' + error.message);
+        showToast(t('toast_login_fail') + error.message);
       }
     }
 
@@ -646,7 +1100,7 @@ function getHTML() {
 
       } catch (e) {
         console.error(e);
-        showToast('Error loading image library');
+        showToast(t('toast_error_load'));
       } finally {
         isLoadingLibrary = false;
         showBottomLoader(false);
@@ -700,7 +1154,7 @@ function getHTML() {
       const gallery = document.getElementById('gallery');
       
       if (filteredLibrary.length === 0) {
-        gallery.innerHTML = '<div class="no-images">No images found.</div>';
+        gallery.innerHTML = \`<div class="no-images">\${t('no_images_found')}</div>\`;
         return;
       }
 
@@ -731,15 +1185,15 @@ function getHTML() {
             \${tagsHtml ? \`<div class="image-tags">\${tagsHtml}</div>\` : ''}
             <div class="image-actions">
               <div class="copy-dropdown">
-                <button onclick="toggleCopyMenu(event)">Copy ▾</button>
+                <button onclick="toggleCopyMenu(event)">\${t('copy')} ▾</button>
                 <div class="copy-dropdown-menu" onclick="event.stopPropagation()">
                   <button onclick="handleCopy('\${img.key}', 'url')">URL</button>
                   <button onclick="handleCopy('\${img.key}', 'html')">HTML</button>
                   <button onclick="handleCopy('\${img.key}', 'md')">Markdown</button>
                 </div>
               </div>
-              <button onclick="openEdit('\${img.key}')">Edit</button>
-              <button class="btn-danger" onclick="deleteImage('\${img.key}')">Del</button>
+              <button onclick="openEdit('\${img.key}')">\${t('edit')}</button>
+              <button class="btn-danger" onclick="deleteImage('\${img.key}')">\${t('del')}</button>
             </div>
           </div>
         \`;
@@ -805,7 +1259,7 @@ function getHTML() {
     function renderTagCloud() {
       const container = document.getElementById('tagCloudContent');
       if (!allTags || allTags.length === 0) {
-        container.innerHTML = '<div style="color: #999; text-align: center; padding: 20px 0;">No tags yet</div>';
+        container.innerHTML = \`<div style="color: #999; text-align: center; padding: 20px 0;">\${t('tag_no_tags')}</div>\`;
         return;
       }
       container.innerHTML = allTags.map(({tag, count}) => {
@@ -841,7 +1295,7 @@ function getHTML() {
       try {
         for (let i = 0; i < files.length; i++) {
           const file = files[i];
-          uploadProgress.textContent = \`Uploading \${i + 1} of \${files.length}...\`;
+          uploadProgress.textContent = t('toast_uploading', i + 1, files.length);
           const formData = new FormData();
           formData.append('file', file);
           if (customName) formData.append('customName', files.length > 1 ? \`\${customName}_\${i + 1}\` : customName);
@@ -877,7 +1331,7 @@ function getHTML() {
       }
       
       if (successCount > 0) {
-          showToast(\`Uploaded \${successCount} images\`);
+          showToast(t('toast_uploaded', successCount));
           loadTags();
           applyFilters();
           updateStatsUI();
@@ -885,7 +1339,7 @@ function getHTML() {
     }
 
     async function deleteImage(key) {
-      if (!confirm('Delete this image?')) return;
+      if (!confirm(t('confirm_del'))) return;
       try {
         const res = await fetch(\`/api/delete/\${key}\`, {
           method: 'DELETE', headers: { 'Authorization': 'Bearer ' + password }
@@ -894,7 +1348,7 @@ function getHTML() {
           fullLibrary = fullLibrary.filter(i => i.key !== key);
           selectedImages.delete(key);
           
-          showToast('Deleted');
+          showToast(t('toast_deleted'));
           loadTags();
           applyFilters(false);
           applyFilters(true);
@@ -903,9 +1357,13 @@ function getHTML() {
       } catch (e) { showToast(e.message); }
     }
     
+    function updateSelectionCount() {
+        document.getElementById('selectedCount').textContent = t('msg_selected', selectedImages.size);
+    }
+
     async function batchDelete() {
-        if (!selectMode || selectedImages.size === 0) return showToast('No images selected');
-        if (!confirm(\`Delete \${selectedImages.size} images?\`)) return;
+        if (!selectMode || selectedImages.size === 0) return showToast(t('toast_no_select'));
+        if (!confirm(t('confirm_batch', selectedImages.size))) return;
         
         const keys = Array.from(selectedImages);
         
@@ -919,14 +1377,14 @@ function getHTML() {
                 const delSet = new Set(keys);
                 fullLibrary = fullLibrary.filter(i => !delSet.has(i.key));
                 selectedImages.clear();
-                document.getElementById('selectedCount').textContent = 'Selected: 0';
+                updateSelectionCount();
                 
-                showToast('Batch delete successful');
+                showToast(t('toast_batch_success'));
                 loadTags();
                 applyFilters();
                 updateStatsUI();
             }
-        } catch(e) { showToast('Batch delete failed'); }
+        } catch(e) { showToast(t('toast_batch_fail')); }
     }
 
     async function saveEdit() {
@@ -947,7 +1405,7 @@ function getHTML() {
                item._searchStr = (item.customName + ' ' + item.originalName + ' ' + item.tags).toLowerCase();
            }
            closeEditModal();
-           showToast('Saved');
+           showToast(t('toast_saved'));
            loadTags();
            applyFilters(false);
            applyFilters();
@@ -965,7 +1423,7 @@ function getHTML() {
       if (!selectMode) {
         selectedImages.clear();
         document.getElementById('bulkActions').classList.remove('show');
-        document.getElementById('selectedCount').textContent = 'Selected: 0';
+        updateSelectionCount();
       } else {
         document.getElementById('bulkActions').classList.add('show');
       }
@@ -977,12 +1435,12 @@ function getHTML() {
     function toggleSelect(key) {
       if (selectedImages.has(key)) selectedImages.delete(key);
       else selectedImages.add(key);
-      document.getElementById('selectedCount').textContent = \`Selected: \${selectedImages.size}\`;
+      updateSelectionCount();
     }
     
     function selectAll() {
       filteredLibrary.forEach(img => selectedImages.add(img.key));
-      document.getElementById('selectedCount').textContent = \`Selected: \${selectedImages.size}\`;
+      updateSelectionCount();
       const scroll = window.scrollY;
       document.getElementById('gallery').innerHTML = '';
       renderedCount = 0;
@@ -992,7 +1450,7 @@ function getHTML() {
     
     function deselectAll() {
       selectedImages.clear();
-      document.getElementById('selectedCount').textContent = 'Selected: 0';
+      updateSelectionCount();
       const scroll = window.scrollY;
       document.getElementById('gallery').innerHTML = '';
       renderedCount = 0;
@@ -1032,8 +1490,8 @@ function getHTML() {
       tagCloudExpanded = !tagCloudExpanded;
       const content = document.getElementById('tagCloudContent');
       const btn = document.querySelector('.tag-cloud-toggle');
-      if (tagCloudExpanded) { content.classList.add('expanded'); btn.textContent = 'Collapse'; }
-      else { content.classList.remove('expanded'); btn.textContent = 'Expand'; }
+      if (tagCloudExpanded) { content.classList.add('expanded'); btn.textContent = t('collapse'); }
+      else { content.classList.remove('expanded'); btn.textContent = t('expand'); }
     }
     
     function showToast(msg) {
@@ -1063,8 +1521,8 @@ function getHTML() {
       }
     }
     async function copyInFormat(url, alt, fmt) {
-      try { await attemptCopy(buildCopyText(url, alt, fmt)); showToast('✓ Copied'); }
-      catch (e) { showToast('✗ Copy failed'); }
+      try { await attemptCopy(buildCopyText(url, alt, fmt)); showToast(t('toast_copy_ok')); }
+      catch (e) { showToast(t('toast_copy_fail')); }
     }
     
     function formatSize(bytes) {
@@ -1100,7 +1558,7 @@ function getHTML() {
         }
       }
       if (files.length && password) uploadFiles(files);
-      else if (files.length) showToast('Please login first');
+      else if (files.length) showToast(t('toast_login_first'));
     });
 
     const uploadArea = document.getElementById('uploadArea');
@@ -1113,6 +1571,7 @@ function getHTML() {
     });
 
     document.addEventListener('DOMContentLoaded', () => {
+      initLanguage();
       checkExistingLogin();
       document.getElementById('currentYear').textContent = new Date().getFullYear();
     });
