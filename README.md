@@ -7,7 +7,7 @@ Create a Workers project, an R2 storage bucket named ‘imgnaondo’ (with the b
 
 Copy the code from workers.js and replace the existing code.
 
-<img width="1888" height="937" alt="image" src="https://github.com/user-attachments/assets/ca614295-fc7d-4edf-90bd-beffc383dd33" />
+<img width="2531" height="1229" alt="image" src="https://github.com/user-attachments/assets/70abee80-43bc-4f7d-ba87-0a108ff19409" />
 
 **Hope you will support me.**
 
