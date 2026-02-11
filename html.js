@@ -1,103 +1,132 @@
 export function getHTML() {
   return `<!DOCTYPE html>
-<html lang="en">
+<html lang="zh-CN">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>ImgNaondo - Image Hosting</title>
+  <title>ImgNaondo 图床</title>
   <style>
     * { margin: 0; padding: 0; box-sizing: border-box; }
-    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: #f5f5f5; color: #333; }
-    .header { background: #2c3e50; color: white; padding: 15px 20px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
+    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: #f8f9fa; color: #333; line-height: 1.6; }
+    .header { background: #fff; border-bottom: 1px solid #e5e7eb; padding: 16px 24px; position: sticky; top: 0; z-index: 100; }
     .header-content { display: flex; justify-content: space-between; align-items: center; max-width: 1400px; margin: 0 auto; }
-    .header h1 { font-size: 24px; font-weight: 600; display: flex; align-items: center; gap: 10px;}
-    .header-controls { display: flex; align-items: center; gap: 15px; }
-    .container { max-width: 1400px; margin: 0 auto; padding: 20px; }
-    .login-box { max-width: 400px; margin: 100px auto; background: white; padding: 30px; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); }
-    .login-box h2 { margin-bottom: 20px; text-align: center; }
-    input, select, textarea { width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 4px; font-size: 14px; margin-bottom: 10px; }
-    input:focus, select:focus, textarea:focus { outline: none; border-color: #3498db; }
-    button { padding: 10px 20px; background: #3498db; color: white; border: none; border-radius: 4px; cursor: pointer; font-size: 14px; transition: background 0.2s; }
-    button:hover { background: #2980b9; }
-    button:disabled { background: #95a5a6; cursor: not-allowed; }
-    .btn-danger { background: #e74c3c; }
-    .btn-danger:hover { background: #c0392b; }
-    .btn-success { background: #27ae60; }
-    .btn-success:hover { background: #229954; }
-    .toolbar { background: white; padding: 15px; border-radius: 8px; margin-bottom: 20px; box-shadow: 0 2px 4px rgba(0,0,0,0.05); display: flex; gap: 10px; flex-wrap: wrap; align-items: center; }
+    .header h1 { font-size: 22px; font-weight: 600; color: #1f2937; display: flex; align-items: center; gap: 8px; }
+    .header-controls { display: flex; align-items: center; gap: 10px; }
+    .container { max-width: 1400px; margin: 0 auto; padding: 24px; }
+    @media (max-width: 768px) {
+      .container { padding: 16px; }
+      .header-content { flex-direction: column; align-items: flex-start; gap: 10px; }
+      .toolbar { flex-direction: column; align-items: stretch; gap: 12px; }
+      .toolbar-section { flex-direction: column; align-items: stretch; gap: 8px; }
+      .search-box { max-width: none; }
+      .upload-inputs { flex-direction: column; }
+      .upload-inputs input { max-width: none; min-width: auto; }
+      .gallery { grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 12px; }
+      .image-info { padding: 12px; }
+      .image-name { font-size: 13px; }
+      .modal-content { padding: 24px; }
+      .toast { top: 70px; right: 16px; left: 16px; }
+    }
+    .login-box { max-width: 380px; margin: 100px auto; background: #fff; padding: 32px; border-radius: 12px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
+    @media (max-width: 480px) {
+      .login-box { margin: 60px auto; padding: 24px; }
+      .header { padding: 12px 16px; }
+      .header h1 { font-size: 18px; }
+    }
+    .login-box h2 { margin-bottom: 24px; text-align: center; font-size: 24px; font-weight: 600; color: #1f2937; }
+    input, select, textarea { width: 100%; padding: 10px 12px; border: 1px solid #d1d5db; border-radius: 8px; font-size: 14px; margin-bottom: 16px; background: #fff; transition: border-color 0.2s, box-shadow 0.2s; font-family: inherit; height: 40px; }
+    input:focus, select:focus, textarea:focus { outline: none; border-color: #3b82f6; box-shadow: 0 0 0 3px rgba(59,130,246,0.1); }
+    input::placeholder, textarea::placeholder { color: #9ca3af; }
+    button { padding: 10px 18px; background: #3b82f6; color: white; border: none; border-radius: 8px; cursor: pointer; font-size: 14px; font-weight: 500; transition: background-color 0.2s, transform 0.1s; height: 40px; display: inline-flex; align-items: center; justify-content: center; }
+    button:hover { background: #2563eb; }
+    button:active { transform: scale(0.98); }
+    button:disabled { background: #d1d5db; cursor: not-allowed; transform: none; }
+    .btn-danger { background: #ef4444; }
+    .btn-danger:hover { background: #dc2626; }
+    .btn-success { background: #10b981; }
+    .btn-success:hover { background: #059669; }
+    .toolbar { background: #fff; padding: 12px 16px; border-radius: 12px; margin-bottom: 20px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); display: flex; gap: 10px; flex-wrap: wrap; align-items: center; }
     .toolbar-section { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
-    .stats { display: flex; gap: 15px; margin-left: auto; font-size: 14px; color: #666; }
-    .upload-box { background: white; border: 2px dashed #ddd; border-radius: 8px; padding: 40px; text-align: center; cursor: pointer; margin-bottom: 20px; transition: all 0.2s; }
-    .upload-box:hover { border-color: #3498db; background: #f8f9fa; }
-    .upload-box.dragging { border-color: #3498db; background: #e3f2fd; }
-    .tag-cloud { background: white; padding: 20px; border-radius: 8px; margin-bottom: 20px; box-shadow: 0 2px 4px rgba(0,0,0,0.05); }
-    .tag-cloud-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; }
-    .tag-cloud-header h3 { font-size: 16px; font-weight: 600; }
-    .tag-cloud-toggle { background: transparent; color: #3498db; padding: 5px 10px; font-size: 13px; }
+    .stats { display: flex; gap: 16px; margin-left: auto; font-size: 14px; color: #6b7280; align-items: center; }
+    .stats strong { color: #1f2937; font-weight: 600; }
+    .upload-box { background: #fff; border: 2px dashed #d1d5db; border-radius: 12px; padding: 24px 20px; text-align: center; cursor: pointer; margin-bottom: 20px; transition: all 0.2s; }
+    .upload-box:hover { border-color: #3b82f6; background: #f9fafb; }
+    .upload-box.dragging { border-color: #3b82f6; background: #eff6ff; }
+    .tag-cloud { background: #fff; padding: 16px; border-radius: 12px; margin-bottom: 20px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
+    .tag-cloud-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; }
+    .tag-cloud-header h3 { font-size: 15px; font-weight: 600; color: #1f2937; }
+    .tag-cloud-toggle { background: transparent; color: #3b82f6; padding: 5px 10px; font-size: 13px; border: none; height: auto; }
+    .tag-cloud-toggle:hover { background: #eff6ff; border-radius: 6px; }
     .tag-cloud-content { display: flex; flex-wrap: wrap; gap: 8px; max-height: 0; overflow: hidden; transition: max-height 0.3s ease; }
     .tag-cloud-content.expanded { max-height: 500px; }
-    .tag-item { display: inline-flex; align-items: center; padding: 6px 12px; background: #ecf0f1; border-radius: 20px; font-size: 13px; cursor: pointer; transition: all 0.2s; user-select: none; }
-    .tag-item:hover { background: #3498db; color: white; transform: translateY(-2px); }
-    .tag-item.active { background: #3498db; color: white; }
-    .tag-item .tag-count { margin-left: 6px; font-size: 11px; opacity: 0.8; font-weight: 600; }
-    .gallery { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 15px; }
-    .image-card { background: white; border-radius: 8px; overflow: visible; box-shadow: 0 2px 4px rgba(0,0,0,0.1); position: relative; transition: transform 0.2s, box-shadow 0.2s; }
-    .image-card:hover { transform: translateY(-2px); box-shadow: 0 4px 8px rgba(0,0,0,0.15); }
-    .image-card.selected { outline: 3px solid #3498db; }
-    .image-card img { width: 100%; height: 200px; object-fit: cover; display: block; cursor: zoom-in; border-top-left-radius: 8px; border-top-right-radius: 8px; }
-    .image-info { padding: 12px; }
-    .image-name { font-weight: 600; margin-bottom: 5px; font-size: 14px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-    .image-meta { font-size: 12px; color: #666; margin-bottom: 3px; }
-    .image-tags { font-size: 12px; margin-bottom: 8px; display: flex; flex-wrap: wrap; gap: 4px; }
-    .image-tag { background: #e3f2fd; color: #1976d2; padding: 2px 8px; border-radius: 10px; }
-    .image-actions { display: flex; gap: 5px; flex-wrap: wrap; }
-    .image-actions button { flex: 1; padding: 6px 10px; font-size: 12px; min-width: 60px; }
-    .checkbox { position: absolute; top: 10px; left: 10px; width: 20px; height: 20px; cursor: pointer; z-index: 10; }
-    .modal { display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.7); z-index: 1000; align-items: center; justify-content: center; }
+    .tag-item { display: inline-flex; align-items: center; padding: 6px 14px; background: #f3f4f6; border-radius: 20px; font-size: 13px; font-weight: 500; cursor: pointer; transition: all 0.2s; user-select: none; color: #4b5563; }
+    .tag-item:hover { background: #3b82f6; color: white; }
+    .tag-item.active { background: #3b82f6; color: white; }
+    .tag-item .tag-count { margin-left: 6px; font-size: 11px; opacity: 0.9; font-weight: 600; }
+    .gallery { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 16px; }
+    .image-card { background: #fff; border-radius: 12px; overflow: hidden; box-shadow: 0 1px 3px rgba(0,0,0,0.1); position: relative; transition: all 0.2s; border: 1px solid #e5e7eb; }
+    .image-card:hover { box-shadow: 0 4px 12px rgba(0,0,0,0.15); }
+    .image-card.selected { outline: 2px solid #3b82f6; outline-offset: 2px; }
+    .image-card img { width: 100%; height: 200px; object-fit: cover; display: block; cursor: zoom-in; transition: transform 0.2s; }
+    .image-card:hover img { transform: scale(1.03); }
+    .image-info { padding: 14px; }
+    .image-name { font-weight: 600; margin-bottom: 6px; font-size: 14px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: #1f2937; }
+    .image-meta { font-size: 12px; color: #6b7280; margin-bottom: 3px; display: flex; align-items: center; gap: 4px; }
+    .image-tags { font-size: 12px; margin-bottom: 10px; display: flex; flex-wrap: wrap; gap: 4px; }
+    .image-tag { background: #eff6ff; color: #3b82f6; padding: 2px 8px; border-radius: 10px; font-weight: 500; }
+    .image-actions { display: flex; gap: 6px; flex-wrap: wrap; }
+    .image-actions button { flex: 1; padding: 6px 10px; font-size: 12px; min-width: 60px; height: 30px; }
+    .checkbox { position: absolute; top: 10px; left: 10px; width: 20px; height: 20px; cursor: pointer; z-index: 10; border-radius: 4px; accent-color: #3b82f6; }
+    .modal { display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.5); z-index: 1000; align-items: center; justify-content: center; }
     .modal.show { display: flex; }
-    .modal-content { background: white; padding: 25px; border-radius: 8px; max-width: 500px; width: 90%; max-height: 90vh; overflow-y: auto; }
-    .modal-content h3 { margin-bottom: 15px; }
-    .form-group { margin-bottom: 15px; }
-    .form-group label { display: block; margin-bottom: 5px; font-weight: 500; font-size: 14px; }
+    .modal-content { background: #fff; padding: 28px; border-radius: 12px; max-width: 480px; width: 90%; max-height: 90vh; overflow-y: auto; box-shadow: 0 20px 60px rgba(0,0,0,0.2); }
+    .modal-content h3 { margin-bottom: 20px; font-size: 20px; font-weight: 600; color: #1f2937; }
+    .form-group { margin-bottom: 18px; }
+    .form-group label { display: block; margin-bottom: 6px; font-weight: 500; font-size: 14px; color: #374151; }
     .form-group input { width: 100%; }
-    .toast { position: fixed; bottom: 20px; right: 20px; background: #333; color: white; padding: 12px 20px; border-radius: 4px; font-size: 14px; z-index: 2000; animation: slideIn 0.3s; }
-    @keyframes slideIn { from { transform: translateX(400px); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
+    .modal-actions { display: flex; gap: 10px; margin-top: 20px; align-items: center; }
+    .modal-actions button { flex: 1; height: 40px; }
+    .toast { position: fixed; top: 80px; right: 24px; background: #1f2937; color: white; padding: 12px 20px; border-radius: 8px; font-size: 14px; font-weight: 500; z-index: 2000; animation: slideIn 0.3s ease; box-shadow: 0 4px 12px rgba(0,0,0,0.15); }
+    @keyframes slideIn { from { transform: translateY(-20px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
     .hidden { display: none !important; }
-    .search-box { flex: 1; max-width: 300px; }
-    select { width: auto; padding: 8px 12px; margin-bottom: 0; }
+    .search-box { flex: 1; max-width: 320px; margin-bottom: 0; }
+    select { width: auto; padding: 10px 12px; margin-bottom: 0; height: 40px; min-width: 120px; }
     .bulk-actions { display: none; gap: 10px; align-items: center; }
     .bulk-actions.show { display: flex; }
-    .no-images { text-align: center; padding: 60px 20px; color: #999; font-size: 16px; }
-    .upload-inputs { margin-top: 15px; display: flex; gap: 10px; justify-content: center; flex-wrap: wrap; }
-    .upload-inputs input { max-width: 250px; display: inline-block; margin-bottom: 0; }
-    .footer { text-align: center; padding: 20px; margin-top: 40px; font-size: 14px; color: #666; border-top: 1px solid #eee; }
-    .footer a { color: #3498db; text-decoration: none; }
+    .bulk-actions button { height: 40px; }
+    .bulk-actions span { height: 40px; display: flex; align-items: center; }
+    .no-images { text-align: center; padding: 60px 20px; color: #9ca3af; font-size: 16px; background: #fff; border-radius: 12px; border: 2px dashed #e5e7eb; }
+    .upload-inputs { margin-top: 16px; display: flex; gap: 10px; justify-content: center; flex-wrap: wrap; align-items: stretch; }
+    .upload-inputs input { max-width: 280px; display: inline-block; margin-bottom: 0; flex: 1; min-width: 200px; }
+    .footer { text-align: center; padding: 24px; margin-top: 48px; font-size: 14px; color: #6b7280; border-top: 1px solid #e5e7eb; background: #fff; }
+    .footer a { color: #3b82f6; text-decoration: none; font-weight: 500; }
     .footer a:hover { text-decoration: underline; }
     .lightbox.modal { align-items: center; justify-content: center; }
-    .lightbox-img { max-width: 85vw; max-height: 85vh; border-radius: 8px; box-shadow: 0 6px 24px rgba(0,0,0,.35); }
-    .lightbox-nav { position: absolute; top: 50%; transform: translateY(-50%); border: none; background: rgba(0,0,0,.5); color: #fff; font-size: 28px; padding: 8px 12px; border-radius: 8px; cursor: pointer; z-index: 1001; }
+    .lightbox-img { max-width: 90vw; max-height: 90vh; border-radius: 8px; box-shadow: 0 20px 60px rgba(0,0,0,0.3); }
+    .lightbox-nav { position: absolute; top: 50%; transform: translateY(-50%); border: none; background: rgba(255,255,255,0.9); color: #1f2937; font-size: 28px; padding: 10px 14px; border-radius: 8px; cursor: pointer; z-index: 1001; transition: all 0.2s; box-shadow: 0 2px 8px rgba(0,0,0,0.2); height: auto; }
+    .lightbox-nav:hover { background: #3b82f6; color: white; }
     .lightbox-nav.prev { left: 20px; }
     .lightbox-nav.next { right: 20px; }
-    .copy-dropdown { position: relative; }
+    .copy-dropdown { position: relative; flex: 1; }
     .copy-dropdown-menu {
       position: absolute;
-      right: 0;
-      bottom: calc(100% + 5px);
+      left: 0;
+      bottom: calc(100% + 6px);
       background: #fff;
-      border-radius: 6px;
+      border-radius: 8px;
       box-shadow: 0 4px 12px rgba(0,0,0,0.15);
-      padding: 5px;
-      min-width: 150px;
+      padding: 6px;
+      min-width: 140px;
       z-index: 50;
       opacity: 0;
-      transform: translateY(10px) scale(0.95);
+      transform: translateY(10px);
       visibility: hidden;
       pointer-events: none;
-      transition: opacity 0.15s ease-out, transform 0.15s ease-out;
+      transition: all 0.2s ease;
     }
     .copy-dropdown.open .copy-dropdown-menu {
       opacity: 1;
-      transform: translateY(0) scale(1);
+      transform: translateY(0);
       visibility: visible;
       pointer-events: auto;
     }
@@ -105,114 +134,114 @@ export function getHTML() {
       width: 100%;
       padding: 8px 12px;
       background: transparent;
-      color: #333;
+      color: #374151;
       text-align: left;
       border: none;
-      border-radius: 4px;
+      border-radius: 6px;
       font-size: 13px;
+      font-weight: 500;
+      height: auto;
     }
     .copy-dropdown-menu button:hover {
-      background: #f0f0f0;
+      background: #f3f4f6;
+      color: #1f2937;
     }
-    .loader { text-align: center; padding: 16px; color: #666; }
-    .lang-select {
-        background: rgba(255,255,255,0.1);
-        color: white;
-        border: 1px solid rgba(255,255,255,0.2);
-        font-size: 13px;
-        padding: 5px 10px;
-        border-radius: 4px;
-        cursor: pointer;
+    .loader { text-align: center; padding: 24px; color: #6b7280; font-size: 14px; display: flex; flex-direction: column; align-items: center; gap: 12px; }
+    .loader::after {
+      content: '';
+      width: 24px;
+      height: 24px;
+      border: 2px solid #e5e7eb;
+      border-top: 2px solid #3b82f6;
+      border-radius: 50%;
+      animation: spin 1s linear infinite;
     }
-    .lang-select option {
-        background: #2c3e50;
-        color: white;
+    @keyframes spin {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
     }
+    .header-controls button { height: 36px; padding: 8px 14px; }
+    .upload-box button { margin-top: 12px; height: 40px; min-width: 120px; }
+    .upload-box h3 { font-size: 16px; font-weight: 600; color: #1f2937; margin-bottom: 4px; }
+    .upload-box p { color: #6b7280; margin-top: 4px; font-size: 13px; }
+    .upload-inputs { margin-top: 12px; display: flex; gap: 10px; justify-content: center; flex-wrap: wrap; align-items: stretch; }
   </style>
 </head>
 <body>
   <div class="header">
     <div class="header-content">
-      <h1>🖼️ <span data-i18n="title">ImgNaondo</span></h1>
+      <h1>🖼️ ImgNaondo 图床</h1>
       <div class="header-controls">
-        <select id="langSelect" class="lang-select" onchange="changeLanguage(this.value)">
-            <option value="en">English</option>
-            <option value="zh">简体中文</option>
-            <option value="fr">Français</option>
-            <option value="de">Deutsch</option>
-            <option value="ru">Русский</option>
-            <option value="nl">Nederlands</option>
-        </select>
-        <button id="logoutButton" class="hidden btn-danger" onclick="logout()" style="padding: 8px 15px;" data-i18n="logout">Logout</button>
-        <button id="syncBtn" class="hidden" onclick="startSync()" style="padding: 8px 15px; background: #e67e22; color: white; border: none; border-radius: 4px; cursor: pointer;" title="Sync R2 to D1">↻ Sync</button>
+        <button id="logoutButton" class="hidden btn-danger" onclick="logout()" style="padding: 8px 14px;">退出登录</button>
+        <button id="syncBtn" class="hidden" onclick="startSync()" style="padding: 8px 14px; background: #f59e0b; color: white; border: none; border-radius: 8px; cursor: pointer;" title="同步 R2 到 D1">↻ 同步</button>
       </div>
     </div>
   </div>
   <div id="loginSection" class="login-box">
-    <h2 data-i18n="login_title">Login</h2>
-    <input type="password" id="passwordInput" data-placeholder="ph_password" placeholder="Enter access password" onkeypress="if(event.key==='Enter')performLogin()">
-    <button style="width: 100%;" onclick="performLogin()" data-i18n="login_btn">Login</button>
+    <h2>登录</h2>
+    <input type="password" id="passwordInput" placeholder="输入访问密码" onkeypress="if(event.key==='Enter')performLogin()">
+    <button style="width: 100%;" onclick="performLogin()">登录</button>
   </div>
   <div id="mainSection" class="container hidden">
     <div class="upload-box" id="uploadArea">
-      <div style="font-size: 48px; margin-bottom: 10px;">☁️</div>
-      <h3 data-i18n="upload_drag">Click or Drag & Drop Images Here</h3>
-      <p style="color: #666; margin-top: 8px;" data-i18n="upload_support">Supports JPG, PNG, GIF, WebP, SVG, BMP</p>
+      <div style="font-size: 36px; margin-bottom: 6px;">☁️</div>
+      <h3>点击或拖拽图片至此</h3>
+      <p>支持 JPG, PNG, GIF, WebP, SVG, BMP</p>
       <input type="file" id="fileInput" accept="image/*" multiple style="display: none;" onchange="handleFileSelect(this.files)">
       <div class="upload-inputs">
-        <input type="text" id="uploadCustomName" data-placeholder="ph_custom_name" placeholder="Custom Name (optional)" onclick="event.stopPropagation()">
-        <input type="text" id="uploadTags" data-placeholder="ph_tags" placeholder="Tags (comma-separated)" onclick="event.stopPropagation()">
+        <input type="text" id="uploadCustomName" placeholder="自定义名称（可选）" onclick="event.stopPropagation()">
+        <input type="text" id="uploadTags" placeholder="标签（逗号分隔）" onclick="event.stopPropagation()">
       </div>
-      <button onclick="event.stopPropagation(); document.getElementById('fileInput').click()" style="margin-top: 15px;" data-i18n="select_files">Select Files</button>
-      <div id="uploadProgress" style="margin-top: 15px; color: #666; font-size: 14px;"></div>
+      <button onclick="event.stopPropagation(); document.getElementById('fileInput').click()">选择文件</button>
+      <div id="uploadProgress" style="margin-top: 12px; color: #6b7280; font-size: 13px;"></div>
     </div>
     <div class="tag-cloud" id="tagCloud">
       <div class="tag-cloud-header">
-        <h3 data-i18n="tag_cloud">🏷️ Tag Cloud</h3>
-        <button class="tag-cloud-toggle" onclick="toggleTagCloud()" data-i18n="expand">Expand</button>
+        <h3>🏷️ 标签云</h3>
+        <button class="tag-cloud-toggle" onclick="toggleTagCloud()">展开</button>
       </div>
       <div class="tag-cloud-content" id="tagCloudContent"></div>
     </div>
     <div class="toolbar">
       <div class="toolbar-section">
-        <input type="text" id="searchInput" class="search-box" data-placeholder="ph_search" placeholder="Search by name or tag...">
+        <input type="text" id="searchInput" class="search-box" placeholder="按名称或标签搜索...">
         <select id="sortSelect" onchange="resetAndLoad()">
         </select>
-        <button onclick="toggleSelectMode()" data-i18n="bulk_select">Bulk Select</button>
+        <button onclick="toggleSelectMode()">批量选择</button>
       </div>
       <div class="bulk-actions" id="bulkActions">
-        <button class="btn-danger" onclick="batchDelete()" data-i18n="delete_selected">Delete Selected</button>
-        <button onclick="selectAll()" data-i18n="select_all">Select All</button>
-        <button onclick="deselectAll()" data-i18n="deselect">Deselect</button>
-        <span id="selectedCount" style="color: #666;">Selected: 0</span>
+        <button class="btn-danger" onclick="batchDelete()">删除选中</button>
+        <button onclick="selectAll()">全选</button>
+        <button onclick="deselectAll()">取消选择</button>
+        <span id="selectedCount" style="color: #6b7280;">已选: 0</span>
       </div>
       <div class="stats">
-        <span><span data-i18n="stat_total">📊 Total:</span> <strong id="totalImages">0</strong></span>
-        <span><span data-i18n="stat_storage">💾 Storage:</span> <strong id="totalSize">0 MB</strong></span>
+        <span>📊 总数: <strong id="totalImages">0</strong></span>
+        <span>💾 占用: <strong id="totalSize">0 MB</strong></span>
       </div>
     </div>
     <div class="gallery" id="gallery"></div>
-    <div id="infiniteLoader" class="loader hidden" data-i18n="loading">Loading...</div>
-    <div id="endMessage" class="loader hidden" data-i18n="no_more">No more images.</div>
+    <div id="infiniteLoader" class="loader hidden">加载中...</div>
+    <div id="endMessage" class="loader hidden">没有更多图片了</div>
   </div>
   <div class="modal" id="editModal" onclick="if(event.target===this)closeEditModal()">
     <div class="modal-content">
-      <h3 data-i18n="edit_title">Edit Image Info</h3>
+      <h3>编辑图片信息</h3>
       <div class="form-group">
-        <label data-i18n="lbl_custom_name">Custom Name</label>
+        <label>自定义名称</label>
         <input type="text" id="editCustomName">
       </div>
       <div class="form-group">
-        <label data-i18n="lbl_tags">Tags (comma-separated)</label>
-        <input type="text" id="editTags" placeholder="landscape, travel, 2024">
+        <label>标签（逗号分隔）</label>
+        <input type="text" id="editTags" placeholder="风景, 旅行, 2024">
       </div>
       <div class="form-group">
-        <label data-i18n="lbl_original">Original Filename</label>
+        <label>原始文件名</label>
         <input type="text" id="editOriginalName" disabled>
       </div>
-      <div style="display: flex; gap: 10px; margin-top: 20px;">
-        <button class="btn-success" onclick="saveEdit()" data-i18n="save">Save</button>
-        <button onclick="closeEditModal()" data-i18n="cancel">Cancel</button>
+      <div class="modal-actions">
+        <button class="btn-success" onclick="saveEdit()">保存</button>
+        <button onclick="closeEditModal()">取消</button>
       </div>
     </div>
   </div>
@@ -227,73 +256,45 @@ export function getHTML() {
   <script>
     const PASSWORD_KEY = 'imgnaondo_password';
     const LOGIN_TIME_KEY = 'imgnaondo_login_time';
-    const LANG_KEY = 'imgnaondo_lang';
     const SESSION_DURATION = 24 * 60 * 60 * 1000;
     const SCROLL_THRESHOLD = 300;
      
-    const i18n = {
-        en: {
-            title: "ImgNaondo",
-            logout: "Logout",
-            login_title: "Login",
-            ph_password: "Enter access password",
-            login_btn: "Login",
-            upload_drag: "Click or Drag & Drop Images Here",
-            upload_support: "Supports JPG, PNG, GIF, WebP, SVG, BMP",
-            ph_custom_name: "Custom Name (optional)",
-            ph_tags: "Tags (comma-separated)",
-            select_files: "Select Files",
-            tag_cloud: "🏷️ Tag Cloud",
-            expand: "Expand",
-            collapse: "Collapse",
-            ph_search: "Search by name or tag...",
-            bulk_select: "Bulk Select",
-            delete_selected: "Delete Selected",
-            select_all: "Select All",
-            deselect: "Deselect",
-            stat_total: "📊 Total:",
-            stat_storage: "💾 Storage:",
-            loading: "Loading...",
-            no_more: "No more images.",
-            no_images_found: "No images found.",
-            edit_title: "Edit Image Info",
-            lbl_custom_name: "Custom Name",
-            lbl_tags: "Tags (comma-separated)",
-            lbl_original: "Original Filename",
-            save: "Save",
-            cancel: "Cancel",
-            copy: "Copy",
-            edit: "Edit",
-            del: "Del",
-            sort_newest: "Newest First",
-            sort_oldest: "Oldest First",
-            sort_largest: "Largest First",
-            sort_smallest: "Smallest First",
-            sort_az: "Name A-Z",
-            sort_za: "Name Z-A",
-            toast_enter_pass: "Please enter the password",
-            toast_incorrect: "Incorrect password",
-            toast_login_fail: "Login failed: ",
-            toast_error_load: "Error loading image library",
-            toast_uploading: "Uploading {0} of {1}...",
-            toast_uploaded: "Uploaded {0} images",
-            confirm_del: "Delete this image?",
-            confirm_batch: "Delete {0} images?",
-            toast_deleted: "Deleted",
-            toast_batch_success: "Batch delete successful",
-            toast_batch_fail: "Batch delete failed",
-            toast_saved: "Saved",
-            toast_no_select: "No images selected",
-            toast_copy_ok: "✓ Copied",
-            toast_copy_fail: "✗ Copy failed",
-            toast_login_first: "Please login first",
-            msg_selected: "Selected: {0}",
-            tag_no_tags: "No tags yet",
-            toast_sync_start: "Sync started...",
-            toast_sync_progress: "Syncing... {0} items processed",
-            toast_sync_complete: "Sync complete! Migrated {0} items."
-        },
-        zh: {
+    let password = '';
+    let currentLibrary = [];
+    
+    let selectedImages = new Set();
+    let selectMode = false;
+    let currentEditKey = '';
+    let activeTag = null;
+    let tagCloudExpanded = false;
+    let isLoadingLibrary = false;
+    let lightboxIndex = -1;
+    let allTags = [];
+    
+    let nextCursor = 0; 
+    let hasMoreImages = true;
+
+    function init() {
+        document.getElementById('currentYear').textContent = new Date().getFullYear();
+        initSortOptions();
+        checkLogin();
+    }
+
+    function initSortOptions() {
+        const sortSelect = document.getElementById('sortSelect');
+        const options = [
+            { value: 'time-desc', text: '最新上传' },
+            { value: 'time-asc', text: '最早上传' },
+            { value: 'size-desc', text: '体积最大' },
+            { value: 'size-asc', text: '体积最小' },
+            { value: 'name-asc', text: '名称 A-Z' },
+            { value: 'name-desc', text: '名称 Z-A' }
+        ];
+        sortSelect.innerHTML = options.map(opt => '<option value="' + opt.value + '">' + opt.text + '</option>').join('');
+    }
+
+    function t(key, ...args) {
+        const translations = {
             title: "ImgNaondo 图床",
             logout: "退出登录",
             login_title: "登录",
@@ -353,150 +354,65 @@ export function getHTML() {
             toast_sync_start: "开始同步...",
             toast_sync_progress: "同步中... 已处理 {0} 项",
             toast_sync_complete: "同步完成！共迁移 {0} 项。"
-        }
-    };
-     
-    let password = '';
-    let currentLibrary = []; // Now only stores current page
-    
-    let selectedImages = new Set();
-    let selectMode = false;
-    let currentEditKey = '';
-    let activeTag = null;
-    let tagCloudExpanded = false;
-    let isLoadingLibrary = false;
-    let lightboxIndex = -1;
-    let currentLang = 'en';
-    let allTags = [];
-    
-    let nextCursor = 0; 
-    let hasMoreImages = true;
-
-    function initLanguage() {
-        const savedLang = localStorage.getItem(LANG_KEY);
-        if (savedLang && i18n[savedLang]) {
-            currentLang = savedLang;
-        } else {
-            const browserLang = navigator.language.split('-')[0];
-            if (i18n[browserLang]) {
-                currentLang = browserLang;
-            } else {
-                currentLang = 'en';
-            }
-        }
-        document.getElementById('langSelect').value = currentLang;
-        updateUIText();
-    }
-
-    function changeLanguage(lang) {
-        if (!i18n[lang]) return;
-        currentLang = lang;
-        localStorage.setItem(LANG_KEY, lang);
-        updateUIText();
-        renderSortOptions();
-        document.getElementById('gallery').innerHTML = '';
-        renderAppendedBatch(currentLibrary);
-        loadTags();
-    }
-
-    function t(key, ...args) {
-        let str = (i18n[currentLang] && i18n[currentLang][key]) || i18n['en'][key] || key;
+        };
+        let text = translations[key] || key;
         args.forEach((arg, i) => {
-            str = str.replace("{" + i + "}", arg);
+            text = text.replace('{' + i + '}', arg);
         });
-        return str;
+        return text;
     }
-
-    function updateUIText() {
-        document.querySelectorAll('[data-i18n]').forEach(el => {
-            el.textContent = t(el.getAttribute('data-i18n'));
-        });
-        document.querySelectorAll('[data-placeholder]').forEach(el => {
-            el.placeholder = t(el.getAttribute('data-placeholder'));
-        });
-        
-        const tagBtn = document.querySelector('.tag-cloud-toggle');
-        if (tagBtn) {
-            tagBtn.textContent = tagCloudExpanded ? t('collapse') : t('expand');
+    
+    function checkLogin() {
+        const savedPassword = localStorage.getItem(PASSWORD_KEY);
+        const loginTime = localStorage.getItem(LOGIN_TIME_KEY);
+        if (savedPassword && loginTime && Date.now() - parseInt(loginTime) < SESSION_DURATION) {
+            password = savedPassword;
+            showMainSection();
         }
     }
-     
-    function renderSortOptions() {
-        const select = document.getElementById('sortSelect');
-        const currentVal = select.value || 'time-desc';
-        select.innerHTML = '';
-        const opts = [
-            {v: 'time-desc', k: 'sort_newest'},
-            {v: 'time-asc', k: 'sort_oldest'},
-            {v: 'size-desc', k: 'sort_largest'},
-            {v: 'size-asc', k: 'sort_smallest'},
-            {v: 'name-asc', k: 'sort_az'},
-            {v: 'name-desc', k: 'sort_za'}
-        ];
-        opts.forEach(o => {
-            const opt = document.createElement('option');
-            opt.value = o.v;
-            opt.textContent = t(o.k);
-            select.appendChild(opt);
-        });
-        select.value = currentVal;
+    
+    async function performLogin() {
+        const input = document.getElementById('passwordInput');
+        const pass = input.value.trim();
+        if (!pass) return showToast(t('toast_enter_pass'));
+        
+        try {
+            const res = await fetch('/api/auth/verify', {
+                method: 'POST',
+                headers: { 'Authorization': 'Bearer ' + pass }
+            });
+            
+            if (res.ok) {
+                password = pass;
+                localStorage.setItem(PASSWORD_KEY, pass);
+                localStorage.setItem(LOGIN_TIME_KEY, Date.now().toString());
+                showMainSection();
+            } else {
+                showToast(t('toast_incorrect'));
+            }
+        } catch (e) {
+            showToast(t('toast_login_fail') + e.message);
+        }
     }
-
-    function checkExistingLogin() {
-      const storedPassword = localStorage.getItem(PASSWORD_KEY);
-      const loginTime = localStorage.getItem(LOGIN_TIME_KEY);
-      if (storedPassword && loginTime && (Date.now() - parseInt(loginTime) < SESSION_DURATION)) {
-        password = storedPassword;
+    
+    function logout() {
+        localStorage.removeItem(PASSWORD_KEY);
+        localStorage.removeItem(LOGIN_TIME_KEY);
+        password = '';
+        document.getElementById('mainSection').classList.add('hidden');
+        document.getElementById('loginSection').classList.remove('hidden');
+        document.getElementById('logoutButton').classList.add('hidden');
+        document.getElementById('syncBtn').classList.add('hidden');
+    }
+    
+    function showMainSection() {
         document.getElementById('loginSection').classList.add('hidden');
         document.getElementById('mainSection').classList.remove('hidden');
         document.getElementById('logoutButton').classList.remove('hidden');
         document.getElementById('syncBtn').classList.remove('hidden');
         loadData();
-      } else {
-        logout(false);
-      }
     }
-
-    function logout(reload = true) {
-      localStorage.removeItem(PASSWORD_KEY);
-      localStorage.removeItem(LOGIN_TIME_KEY);
-      password = '';
-      if (reload) location.reload();
-    }
-
-    async function performLogin() {
-      const inputPassword = document.getElementById('passwordInput').value;
-      if (!inputPassword) return showToast(t('toast_enter_pass'));
-      try {
-        const res = await fetch('/api/auth/verify', { method: 'POST', headers: { 'Authorization': 'Bearer ' + inputPassword } });
-        if (res.ok) {
-          password = inputPassword;
-          localStorage.setItem(PASSWORD_KEY, password);
-          localStorage.setItem(LOGIN_TIME_KEY, Date.now());
-          document.getElementById('loginSection').classList.add('hidden');
-          document.getElementById('mainSection').classList.remove('hidden');
-          document.getElementById('logoutButton').classList.remove('hidden');
-          document.getElementById('syncBtn').classList.remove('hidden');
-          loadData();
-        } else {
-          if (res.status === 429) {
-             const err = await res.json();
-             showToast(err.error);
-          } else {
-             try {
-                 const err = await res.json();
-                 if(err.error) showToast(err.error);
-                 else showToast(t('toast_incorrect'));
-             } catch(e) {
-                 showToast(t('toast_incorrect'));
-             }
-          }
-        }
-      } catch (error) {
-        showToast(t('toast_login_fail') + error.message);
-      }
-    }
-
+    
     async function loadData() {
       resetAndLoad();
       loadStats();
@@ -544,7 +460,7 @@ export function getHTML() {
             showToast(t('toast_sync_complete', total));
             loadData(); 
         } catch (e) {
-            showToast('Sync failed: ' + e.message);
+            showToast('同步失败: ' + e.message);
         } finally {
             btn.disabled = false;
         }
@@ -620,13 +536,11 @@ export function getHTML() {
         const safeName = displayName.replace(/"/g, '&quot;').replace(/'/g, '&#39;');
         const safeKey = img.key.replace(/"/g, '&quot;');
         
-        // Tags HTML
         let tagsHtml = '';
         if (img.tags) {
             tagsHtml = img.tags.split(',').map(function(tag) { return '<span class="image-tag">' + tag.trim() + '</span>'; }).join('');
         }
         
-        // Construct HTML using data attributes instead of inline handlers
         const parts = [];
         
         if (selectMode) {
@@ -707,7 +621,7 @@ export function getHTML() {
     function renderTagCloud() {
       const container = document.getElementById('tagCloudContent');
       if (!allTags || allTags.length === 0) {
-        container.innerHTML = '<div style="color: #999; text-align: center; padding: 20px 0;">' + t('tag_no_tags') + '</div>';
+        container.innerHTML = '<div style="color: #9ca3af; text-align: center; padding: 16px 0;">' + t('tag_no_tags') + '</div>';
         return;
       }
       container.innerHTML = allTags.map(function(item) {
@@ -732,7 +646,7 @@ export function getHTML() {
       let successCount = 0;
       
       try {
-        for (let i = 0; i < files.length; i++) {
+        for (var i = 0; i < files.length; i++) {
           const file = files[i];
           uploadProgress.textContent = t('toast_uploading', i + 1, files.length);
           const formData = new FormData();
@@ -798,7 +712,7 @@ export function getHTML() {
           loadTags();
           loadStats();
         }
-      } catch (e) { showToast(e.message); }
+      } catch (e) { showToast('删除失败: ' + e.message); }
     }
      
     function updateSelectionCount() {
@@ -855,7 +769,7 @@ export function getHTML() {
            
            loadTags();
         }
-      } catch(e) { showToast(e.message); }
+      } catch(e) { showToast('保存失败: ' + e.message); }
     }
 
     function showBottomLoader(show) {
@@ -882,19 +796,19 @@ export function getHTML() {
     }
      
     function selectAll() {
-      currentLibrary.forEach(img => selectedImages.add(img.key));
+      currentLibrary.forEach(function(img) { selectedImages.add(img.key); });
       updateSelectionCount();
       const gallery = document.getElementById('gallery');
-      Array.from(gallery.querySelectorAll('.image-card')).forEach(card => card.classList.add('selected'));
-      Array.from(gallery.querySelectorAll('.checkbox')).forEach(cb => cb.checked = true);
+      Array.from(gallery.querySelectorAll('.image-card')).forEach(function(card) { card.classList.add('selected'); });
+      Array.from(gallery.querySelectorAll('.checkbox')).forEach(function(cb) { cb.checked = true; });
     }
      
     function deselectAll() {
       selectedImages.clear();
       updateSelectionCount();
       const gallery = document.getElementById('gallery');
-      Array.from(gallery.querySelectorAll('.image-card')).forEach(card => card.classList.remove('selected'));
-      Array.from(gallery.querySelectorAll('.checkbox')).forEach(cb => cb.checked = false);
+      Array.from(gallery.querySelectorAll('.image-card')).forEach(function(card) { card.classList.remove('selected'); });
+      Array.from(gallery.querySelectorAll('.checkbox')).forEach(function(cb) { cb.checked = false; });
     }
 
     function openEdit(key) {
@@ -935,13 +849,15 @@ export function getHTML() {
      
     function showToast(msg) {
       const t = document.createElement('div'); t.className='toast'; t.textContent=msg;
-      document.body.appendChild(t); setTimeout(()=>t.remove(), 2500);
+      document.body.appendChild(t); setTimeout(function(){t.remove();}, 2500);
     }
      
     function toggleCopyMenu(e) {
+      e.preventDefault();
       e.stopPropagation();
       const wrap = e.target.closest('.copy-dropdown');
-      document.querySelectorAll('.copy-dropdown.open').forEach(el => { if (el !== wrap) el.classList.remove('open'); });
+      if (!wrap) return;
+      document.querySelectorAll('.copy-dropdown.open').forEach(function(el) { if (el !== wrap) el.classList.remove('open'); });
       wrap.classList.toggle('open');
     }
      
@@ -970,9 +886,7 @@ export function getHTML() {
       return (bytes / (1024 * 1024)).toFixed(1) + ' MB';
     }
 
-    // Event delegation for gallery actions
     document.addEventListener('click', function(e) {
-      // Close copy dropdowns
       if (!e.target.closest('.copy-dropdown')) {
         document.querySelectorAll('.copy-dropdown.open').forEach(function(el) {
           el.classList.remove('open');
@@ -981,7 +895,6 @@ export function getHTML() {
       
       var target = e.target;
       
-      // Handle checkbox selection
       if (target.classList.contains('js-select')) {
         var key = target.getAttribute('data-key');
         toggleSelect(key);
@@ -993,138 +906,73 @@ export function getHTML() {
         return;
       }
       
-      // Handle lightbox open
       if (target.classList.contains('js-lightbox')) {
         var key = target.getAttribute('data-key');
         openLightbox(key);
         return;
       }
       
-      // Handle copy menu toggle
       if (target.classList.contains('js-copy-menu')) {
-        e.stopPropagation();
-        var wrap = target.closest('.copy-dropdown');
-        document.querySelectorAll('.copy-dropdown.open').forEach(function(el) { 
-          if (el !== wrap) el.classList.remove('open'); 
-        });
-        wrap.classList.toggle('open');
+        toggleCopyMenu(e);
         return;
       }
       
-      // Handle copy action
       if (target.classList.contains('js-copy')) {
-        e.stopPropagation();
         var key = target.getAttribute('data-key');
         var format = target.getAttribute('data-format');
         handleCopy(key, format);
         return;
       }
       
-      // Handle edit
       if (target.classList.contains('js-edit')) {
         var key = target.getAttribute('data-key');
         openEdit(key);
         return;
       }
       
-      // Handle delete
       if (target.classList.contains('js-delete')) {
         var key = target.getAttribute('data-key');
         deleteImage(key);
         return;
       }
       
-      // Handle tag filter
-      if (target.classList.contains('js-tag') || target.closest('.js-tag')) {
-        var tagEl = target.classList.contains('js-tag') ? target : target.closest('.js-tag');
-        var tag = tagEl.getAttribute('data-tag');
+      if (target.classList.contains('js-tag')) {
+        var tag = target.getAttribute('data-tag');
         filterByTag(tag);
         return;
       }
-      
-      // Handle lightbox close
-      if (target.id === 'lightbox') {
-        closeLightbox();
-        return;
-      }
-      
-      // Handle edit modal close  
-      if (target.id === 'editModal') {
-        closeEditModal();
-        return;
-      }
-    });
-     
-    let searchTimeout;
-    document.getElementById('searchInput').addEventListener('input', () => {
-        clearTimeout(searchTimeout);
-        searchTimeout = setTimeout(resetAndLoad, 300);
-    });
-     
-    document.addEventListener('keydown', (e) => {
-      if (e.key === 'Escape') { closeEditModal(); closeLightbox(); }
-      else if (document.getElementById('lightbox').classList.contains('show')) {
-        if (e.key === 'ArrowLeft') prevImage();
-        if (e.key === 'ArrowRight') nextImage();
-      }
-    });
-     
-    window.addEventListener('paste', async (e) => {
-      const items = e.clipboardData && e.clipboardData.items;
-      if (!items || !items.length) return;
-      const files = [];
-      const mimeToExt = {'image/jpeg':'jpg','image/png':'png','image/gif':'gif','image/webp':'webp','image/bmp':'bmp','image/svg+xml':'svg'};
-      for (const it of items) {
-        if (it.type && it.type.startsWith('image/')) {
-          const blob = it.getAsFile();
-          const ext = mimeToExt[blob.type] || blob.type.split('/')[1] || 'png';
-          files.push(new File([blob], 'pasted_' + Date.now() + '.' + ext, { type: blob.type }));
-        }
-      }
-      if (files.length && password) uploadFiles(files);
-      else if (files.length) showToast(t('toast_login_first'));
     });
 
-    const uploadArea = document.getElementById('uploadArea');
-    uploadArea.addEventListener('dragover', (e) => { e.preventDefault(); uploadArea.classList.add('dragging'); });
-    uploadArea.addEventListener('dragleave', (e) => { if (e.target === uploadArea) uploadArea.classList.remove('dragging'); });
-    uploadArea.addEventListener('drop', (e) => {
-      e.preventDefault(); uploadArea.classList.remove('dragging');
-      const files = Array.from(e.dataTransfer.files).filter(f => f.type.startsWith('image/'));
+    document.addEventListener('dragover', function(e) {
+      e.preventDefault();
+      document.getElementById('uploadArea').classList.add('dragging');
+    });
+
+    document.addEventListener('dragleave', function(e) {
+      if (e.target.id === 'uploadArea') {
+        document.getElementById('uploadArea').classList.remove('dragging');
+      }
+    });
+
+    document.addEventListener('drop', function(e) {
+      e.preventDefault();
+      document.getElementById('uploadArea').classList.remove('dragging');
+      if (!password) return showToast(t('toast_login_first'));
+      const files = e.dataTransfer.files;
       if (files.length > 0) uploadFiles(files);
     });
 
-    // Expose functions to global scope for inline event handlers
-    window.performLogin = performLogin;
-    window.logout = logout;
-    window.changeLanguage = changeLanguage;
-    window.handleFileSelect = function(files) { if (files.length > 0) uploadFiles(Array.from(files)); };
-    window.toggleTagCloud = toggleTagCloud;
-    window.resetAndLoad = resetAndLoad;
-    window.toggleSelectMode = toggleSelectMode;
-    window.batchDelete = batchDelete;
-    window.selectAll = selectAll;
-    window.deselectAll = deselectAll;
-    window.saveEdit = saveEdit;
-    window.closeEditModal = closeEditModal;
-    window.openLightbox = openLightbox;
-    window.closeLightbox = closeLightbox;
-    window.prevImage = prevImage;
-    window.nextImage = nextImage;
-    window.toggleCopyMenu = toggleCopyMenu;
-    window.handleCopy = handleCopy;
-    window.openEdit = openEdit;
-    window.deleteImage = deleteImage;
-    window.startSync = startSync;
-    window.filterByTag = filterByTag;
-    window.toggleSelect = toggleSelect;
-
-    document.addEventListener('DOMContentLoaded', () => {
-      initLanguage();
-      checkExistingLogin();
-      document.getElementById('currentYear').textContent = new Date().getFullYear();
+    document.getElementById('uploadArea').addEventListener('click', function() {
+      if (!password) return showToast(t('toast_login_first'));
+      document.getElementById('fileInput').click();
     });
+
+    document.getElementById('fileInput').addEventListener('change', function(e) {
+      if (this.files.length > 0) uploadFiles(this.files);
+    });
+
+    init();
   </script>
 </body>
-</html>`
+</html>`;
 }
